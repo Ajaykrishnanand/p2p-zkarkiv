@@ -5,6 +5,8 @@ import {
   bool,
   jsonToPayload,
 } from "@arkiv-network/sdk";
+import { eq, and, lte } from "@arkiv-network/sdk/query";
+import { publicClient } from "./arkivClient";
 import { assertSyntheticUpi } from "./syntheticGuard";
 
 export const APP_ID = "zkupi-arkiv-v1";
@@ -110,4 +112,51 @@ export async function createP2POrder(
     payload: jsonToPayload(payloadData),
     expiresIn: ExpirationTime.fromMinutes(params.ttlMinutes || 60),
   });
+}
+
+/**
+ * 2. QUERY ACTIVE ORDERS USING ARKIV INDEXED ATTRIBUTES
+ *
+ * Leverages Arkiv decentralized query filters for fast orderbook rendering.
+ */
+export async function queryOpenInrOrders(maxRate?: number): Promise<P2POrderEntity[]> {
+  const baseFilter = and(
+    eq("appId", str(APP_ID)),
+    eq("entityType", str("p2p_order")),
+    eq("fiatCurrency", str("INR"))
+  );
+
+  const filter = maxRate
+    ? and(baseFilter, lte("rate", u256(BigInt(maxRate))))
+    : baseFilter;
+
+  const entities = await publicClient.queryEntities({
+    where: filter,
+  });
+
+  return entities.map((entity: any) => ({
+    key: entity.key,
+    attributes: entity.attributes,
+    data: payloadToJson<P2POrderPayload>(entity.payload),
+    expiresAt: entity.expiresAt,
+  }));
+}
+
+/**
+ * Queries a single order entity by its 32-byte hexadecimal key.
+ */
+export async function queryOrderEntityByKey(key: `0x${string}`): Promise<P2POrderEntity | null> {
+  try {
+    const entity = await publicClient.getEntity({ key });
+    if (!entity) return null;
+    return {
+      key: entity.key,
+      attributes: entity.attributes,
+      data: payloadToJson<P2POrderPayload>(entity.payload),
+      expiresAt: entity.expiresAt,
+    };
+  } catch (err) {
+    console.warn("Failed to fetch entity key:", key, err);
+    return null;
+  }
 }
