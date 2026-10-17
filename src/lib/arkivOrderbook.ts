@@ -5,9 +5,10 @@ import {
   bool,
   jsonToPayload,
   predictEntityKey,
+  NO_SALT,
 } from "@arkiv-network/sdk";
 import { eq, and, lte } from "@arkiv-network/sdk/query";
-import { publicClient } from "./arkivClient";
+import { publicClient, TIRAMISU_CHAIN_ID } from "./arkivClient";
 import { assertSyntheticUpi } from "./syntheticGuard";
 import { ZkProofBundle } from "./zkTlsProver";
 
@@ -44,7 +45,7 @@ export interface P2POrderEntity {
     [key: string]: any;
   };
   data: P2POrderPayload;
-  expiresAt?: number | null;
+  expiresAt?: bigint | number | null;
 }
 
 /**
@@ -122,26 +123,30 @@ export async function createP2POrder(
  * Leverages Arkiv decentralized query filters for fast orderbook rendering.
  */
 export async function queryOpenInrOrders(maxRate?: number): Promise<P2POrderEntity[]> {
-  const baseFilter = and(
-    eq("appId", str(APP_ID)),
-    eq("entityType", str("p2p_order")),
-    eq("fiatCurrency", str("INR"))
-  );
+  try {
+    const baseFilter = and(
+      eq("appId", str(APP_ID)),
+      eq("entityType", str("p2p_order")),
+      eq("fiatCurrency", str("INR"))
+    );
 
-  const filter = maxRate
-    ? and(baseFilter, lte("rate", u256(BigInt(maxRate))))
-    : baseFilter;
+    const filter = maxRate
+      ? and(baseFilter, lte("rate", u256(BigInt(maxRate))))
+      : baseFilter;
 
-  const entities = await publicClient.queryEntities({
-    where: filter,
-  });
+    const res = await (publicClient as any).query(filter);
+    const entities = res?.entities || [];
 
-  return entities.map((entity: any) => ({
-    key: entity.key,
-    attributes: entity.attributes,
-    data: payloadToJson<P2POrderPayload>(entity.payload),
-    expiresAt: entity.expiresAt,
-  }));
+    return entities.map((entity: any) => ({
+      key: entity.key,
+      attributes: entity.attributes,
+      data: payloadToJson<P2POrderPayload>(entity.payload),
+      expiresAt: entity.expiresAt,
+    }));
+  } catch (err) {
+    console.warn("Arkiv queryOpenInrOrders error:", err);
+    return [];
+  }
 }
 
 /**
@@ -149,7 +154,7 @@ export async function queryOpenInrOrders(maxRate?: number): Promise<P2POrderEnti
  */
 export async function queryOrderEntityByKey(key: `0x${string}`): Promise<P2POrderEntity | null> {
   try {
-    const entity = await publicClient.getEntity({ key });
+    const entity = await (publicClient as any).getEntity(key);
     if (!entity) return null;
     return {
       key: entity.key,
@@ -202,9 +207,15 @@ export async function settleOrderWithZkTlsProof(
   zkBundle: ZkProofBundle
 ) {
   // Feature 3: Deterministic Entity Key Prediction to prevent UTR double-spend
+  // Converts first 16 hex chars to BigInt uint64 nonce
+  const rawNonce = BigInt(zkBundle.nullifierHash.slice(0, 18));
+  const nonce = rawNonce & 0xffffffffffffffffn;
+
   const predictedNullifierKey = predictEntityKey({
     owner: ownerAddress,
-    nonce: BigInt(zkBundle.nullifierHash.slice(0, 18)),
+    nonce,
+    salt: NO_SALT,
+    chainId: TIRAMISU_CHAIN_ID,
   });
 
   // Create immutable UTR nullifier receipt
