@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { TIRAMISU_CHAIN_ID, ARKIV_EXPLORER_URL } from "@/lib/arkivClient";
 import { P2POrderEntity } from "@/lib/arkivOrderbook";
+import { NetworkSwitcher } from "./NetworkSwitcher";
 
 interface NavbarProps {
   walletAddress: string;
@@ -25,6 +26,8 @@ interface NavbarProps {
   onConnectWallet?: () => void;
   onDisconnectWallet?: () => void;
   onOpenUpiSimulator?: () => void;
+  onOpenEscrowModal?: () => void;
+  onNetworkChanged?: (chainId: number) => void;
   isMetaMaskConnected?: boolean;
   orders?: P2POrderEntity[];
   wsBlock?: string | null;
@@ -36,6 +39,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onConnectWallet,
   onDisconnectWallet,
   onOpenUpiSimulator,
+  onOpenEscrowModal,
+  onNetworkChanged,
   isMetaMaskConnected,
   orders = [],
   wsBlock,
@@ -195,7 +200,10 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
 
         {/* Right Action Items */}
-        <div className="flex items-center gap-2.5 shrink-0">
+        <div className="flex items-center gap-2 shrink-0">
+          {/* 1-Click Network Switcher (Arkiv DB-Chain <-> Base Sepolia) */}
+          <NetworkSwitcher onNetworkChanged={onNetworkChanged} />
+
           {/* Connect MetaMask / Connected Wallet Pill */}
           {!walletAddress ? (
             <button
@@ -251,6 +259,19 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           )}
 
+          {/* Base Sepolia Escrow Deposit Button */}
+          {onOpenEscrowModal && (
+            <button
+              onClick={onOpenEscrowModal}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs border border-blue-200 transition-all shadow-2xs cursor-pointer active:scale-95"
+              title="Deposit USDC to Base Sepolia Escrow Contract"
+            >
+              <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
+              <span className="hidden sm:inline">Base Escrow</span>
+              <span className="sm:hidden">Escrow</span>
+            </button>
+          )}
+
           {/* Interactive UPI Mobile Simulator Trigger Button */}
           {onOpenUpiSimulator && (
             <button
@@ -269,7 +290,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             href="https://github.com/Ajaykrishnanand/p2p-zkarkiv/blob/main/HOW_TO_USE.md"
             target="_blank"
             rel="noreferrer"
-            className="hidden lg:flex px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs items-center gap-1.5 border border-emerald-200 transition-all shadow-2xs"
+            className="hidden xl:flex px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs items-center gap-1.5 border border-emerald-200 transition-all shadow-2xs"
             title="Read the Public How to Use Guide"
           >
             <BookOpen className="w-3.5 h-3.5 text-emerald-600" />
@@ -277,25 +298,12 @@ export const Navbar: React.FC<NavbarProps> = ({
             <ExternalLink className="w-3 h-3 text-emerald-500" />
           </a>
 
-          {/* Base Sepolia Escrow Link */}
-          <a
-            href="https://sepolia.basescan.org/address/0xe43113320abe84a5c155016bc21cd9abceedfb05"
-            target="_blank"
-            rel="noreferrer"
-            className="hidden xl:flex px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs items-center gap-1.5 border border-slate-200 transition-all"
-            title="View Live Escrow Contract on Basescan"
-          >
-            <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-            <span>Base Sepolia Escrow</span>
-            <ExternalLink className="w-3 h-3 text-slate-400" />
-          </a>
-
           {/* Faucet Link Pill */}
           <a
             href="https://hub.arkiv.network/faucet"
             target="_blank"
             rel="noreferrer"
-            className="hidden sm:flex px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs items-center gap-1.5 shadow-sm transition-all"
+            className="hidden 2xl:flex px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs items-center gap-1.5 shadow-sm transition-all"
           >
             <span>Get Test GLM</span>
             <ExternalLink className="w-3 h-3" />

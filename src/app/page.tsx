@@ -18,6 +18,7 @@ import { LiveOrderbook } from "@/components/LiveOrderbook";
 import { ZkSettlementModal } from "@/components/ZkSettlementModal";
 import { ExplorerInspector } from "@/components/ExplorerInspector";
 import { UpiMobileSimulatorModal } from "@/components/UpiMobileSimulatorModal";
+import { BaseEscrowModal } from "@/components/BaseEscrowModal";
 import {
   P2POrderEntity,
   createP2POrder,
@@ -50,6 +51,7 @@ export default function Home() {
   const [orderToLock, setOrderToLock] = useState<P2POrderEntity | null>(null);
   const [inspectedEntity, setInspectedEntity] = useState<P2POrderEntity | null>(null);
   const [isUpiSimulatorOpen, setIsUpiSimulatorOpen] = useState<boolean>(false);
+  const [isEscrowModalOpen, setIsEscrowModalOpen] = useState<boolean>(false);
 
   // Check existing MetaMask authorization on mount and listen to account changes
   useEffect(() => {
@@ -274,6 +276,7 @@ export default function Home() {
           onConnectWallet={handleConnectMetaMask}
           onDisconnectWallet={handleDisconnectMetaMask}
           onOpenUpiSimulator={() => setIsUpiSimulatorOpen(true)}
+          onOpenEscrowModal={() => setIsEscrowModalOpen(true)}
           isMetaMaskConnected={isMetaMask}
           orders={orders}
           wsBlock={wsStatus.latestBlock}
@@ -304,6 +307,7 @@ export default function Home() {
                 onPostOrder={handlePostOrder}
                 walletAddress={walletAccount?.address || ""}
                 onConnectWallet={handleConnectMetaMask}
+                onOpenEscrowModal={() => setIsEscrowModalOpen(true)}
                 isSubmitting={isSubmitting}
                 selectedPrice={selectedBookPrice}
               />
@@ -356,6 +360,12 @@ export default function Home() {
       <UpiMobileSimulatorModal
         isOpen={isUpiSimulatorOpen}
         onClose={() => setIsUpiSimulatorOpen(false)}
+      />
+
+      <BaseEscrowModal
+        isOpen={isEscrowModalOpen}
+        onClose={() => setIsEscrowModalOpen(false)}
+        walletAddress={walletAccount?.address || ""}
       />
     </div>
   );

@@ -31,6 +31,7 @@ interface TradeExecutionPanelProps {
   isSubmitting: boolean;
   selectedPrice?: number;
   onConnectWallet?: () => void;
+  onOpenEscrowModal?: () => void;
 }
 
 export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
@@ -39,6 +40,7 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
   isSubmitting,
   selectedPrice,
   onConnectWallet,
+  onOpenEscrowModal,
 }) => {
   const [tradeSide, setTradeSide] = useState<"BUY" | "SELL">("BUY");
   const [orderType, setOrderType] = useState<"LIMIT" | "MARKET">("LIMIT");
@@ -205,6 +207,23 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
               Sell USDC
             </button>
           </div>
+
+          {/* Base Sepolia Escrow Deposit Notice for Sellers */}
+          {tradeSide === "SELL" && onOpenEscrowModal && (
+            <div className="p-2.5 rounded-xl bg-blue-50/80 border border-blue-200 text-blue-900 flex items-center justify-between gap-2 animate-fadeIn">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse shrink-0" />
+                <span className="text-[11px] font-bold text-blue-950">Deposit Base Escrow</span>
+              </div>
+              <button
+                type="button"
+                onClick={onOpenEscrowModal}
+                className="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10px] transition-colors cursor-pointer shadow-2xs shrink-0"
+              >
+                Deposit USDC
+              </button>
+            </div>
+          )}
 
           {/* Order Type Selector */}
           <div>
