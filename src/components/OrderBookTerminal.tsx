@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { ArrowUpRight, ArrowDownRight, Layers, Clock } from "lucide-react";
+import React, { useState, useMemo } from "react";
+import { ArrowUpRight, ArrowDownRight, Layers, Clock, AlertCircle, Plus } from "lucide-react";
 import { P2POrderEntity } from "@/lib/arkivOrderbook";
 
 interface OrderBookTerminalProps {
@@ -17,174 +17,277 @@ export const OrderBookTerminal: React.FC<OrderBookTerminalProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<"BOOK" | "TRADES">("BOOK");
 
-  // Simulated & Real orderbook depth
-  const asks = [
-    { price: 88.45, size: 1450.0, total: 128252.5, depth: 85 },
-    { price: 88.20, size: 820.5, total: 72368.1, depth: 65 },
-    { price: 88.05, size: 2100.0, total: 184905.0, depth: 90 },
-    { price: 87.90, size: 540.2, total: 47483.5, depth: 40 },
-    { price: 87.75, size: 950.0, total: 83362.5, depth: 55 },
-    { price: 87.60, size: 1120.8, total: 98182.0, depth: 70 },
-  ];
+  // Derive live Asks, Bids, and Recent Trades strictly from on-chain Arkiv entities
+  const { asks, bids, recentTrades, midPrice, spread, bidRatio } = useMemo(() => {
+    const openOrders = orders.filter((o) => o.attributes?.status !== "SETTLED");
+    const settledOrders = orders.filter((o) => o.attributes?.status === "SETTLED");
 
-  const bids = [
-    { price: 87.45, size: 1250.0, total: 109312.5, depth: 60 },
-    { price: 87.30, size: 980.4, total: 85588.9, depth: 45 },
-    { price: 87.15, size: 3100.0, total: 270165.0, depth: 95 },
-    { price: 87.00, size: 1640.0, total: 142680.0, depth: 75 },
-    { price: 86.85, size: 890.0, total: 77296.5, depth: 50 },
-    { price: 86.70, size: 2200.5, total: 190783.3, depth: 80 },
-  ];
+    // Partition into Asks (rate >= 87.5) and Bids (rate < 87.5) or by rate distribution
+    const sorted = [...openOrders].sort((a, b) => {
+      const rateA = Number(a.attributes?.rate || 87);
+      const rateB = Number(b.attributes?.rate || 87);
+      return rateB - rateA;
+    });
+
+    const parsedAsks: Array<{
+      key: string;
+      price: number;
+      size: number;
+      total: number;
+      depth: number;
+      entity: P2POrderEntity;
+    }> = [];
+
+    const parsedBids: Array<{
+      key: string;
+      price: number;
+      size: number;
+      total: number;
+      depth: number;
+      entity: P2POrderEntity;
+    }> = [];
+
+    let maxVol = 1000;
+    sorted.forEach((order) => {
+      const price = Number(order.attributes?.rate || 87.5);
+      const inr = Number(order.attributes?.amountInr || 5000);
+      const size = Number(order.data?.usdcAmount || inr / price);
+      if (inr > maxVol) maxVol = inr;
+
+      const item = {
+        key: order.key,
+        price,
+        size,
+        total: inr,
+        depth: Math.min(Math.round((inr / 20000) * 100), 95),
+        entity: order,
+      };
+
+      if (price >= 87.5) {
+        parsedAsks.push(item);
+      } else {
+        parsedBids.push(item);
+      }
+    });
+
+    // Recent trades strictly from settled on-chain Arkiv entities
+    const trades = settledOrders.map((s) => ({
+      key: s.key,
+      price: Number(s.attributes?.rate || 87.5),
+      size: Number(s.data?.usdcAmount || 57.14),
+      time: s.data?.settledAt
+        ? new Date(s.data.settledAt).toLocaleTimeString("en-IN", {
+            hour12: false,
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+          })
+        : "Just now",
+      isBuy: true,
+      raw: s,
+    }));
+
+    const calculatedMid =
+      parsedAsks.length > 0 && parsedBids.length > 0
+        ? (parsedAsks[parsedAsks.length - 1].price + parsedBids[0].price) / 2
+        : 87.5;
+
+    const calculatedSpread =
+      parsedAsks.length > 0 && parsedBids.length > 0
+        ? Math.abs(parsedAsks[parsedAsks.length - 1].price - parsedBids[0].price)
+        : 0.15;
+
+    const totalBids = parsedBids.reduce((acc, b) => acc + b.total, 0);
+    const totalAsks = parsedAsks.reduce((acc, a) => acc + a.total, 0);
+    const ratio =
+      totalBids + totalAsks > 0
+        ? Math.round((totalBids / (totalBids + totalAsks)) * 100)
+        : 50;
+
+    return {
+      asks: parsedAsks.slice(0, 5),
+      bids: parsedBids.slice(0, 5),
+      recentTrades: trades,
+      midPrice: calculatedMid,
+      spread: calculatedSpread,
+      bidRatio: ratio,
+    };
+  }, [orders]);
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm flex flex-col justify-between h-[420px] text-xs">
       {/* Header Tabs */}
       <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
           <button
             onClick={() => setActiveTab("BOOK")}
-            className={`font-bold pb-1 transition-colors ${
+            className={`font-bold pb-1 transition-colors flex items-center gap-1.5 ${
               activeTab === "BOOK"
                 ? "text-slate-900 border-b-2 border-slate-900"
                 : "text-slate-400 hover:text-slate-600"
             }`}
           >
-            Order book
+            <span>Order book</span>
+            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-100 text-slate-700">
+              {asks.length + bids.length}
+            </span>
           </button>
           <button
             onClick={() => setActiveTab("TRADES")}
-            className={`font-bold pb-1 transition-colors ${
+            className={`font-bold pb-1 transition-colors flex items-center gap-1.5 ${
               activeTab === "TRADES"
                 ? "text-slate-900 border-b-2 border-slate-900"
                 : "text-slate-400 hover:text-slate-600"
             }`}
           >
-            Recent trades
+            <span>Recent trades</span>
+            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-100 text-slate-700">
+              {recentTrades.length}
+            </span>
           </button>
         </div>
 
-        {/* View Mode icons */}
         <div className="flex items-center gap-1 text-slate-400">
-          <button className="p-1 rounded hover:bg-slate-50 text-emerald-600" title="Both Asks and Bids">
-            <Layers className="w-3.5 h-3.5" />
-          </button>
+          <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+            On-Chain
+          </span>
         </div>
       </div>
 
       {activeTab === "BOOK" ? (
         <div className="flex-1 flex flex-col justify-between my-2 overflow-hidden">
-          {/* Table Column Titles */}
+          {/* Table Titles */}
           <div className="grid grid-cols-3 text-[10px] font-semibold text-slate-400 uppercase py-1 px-1">
             <span>Price (INR)</span>
             <span className="text-right">Size (USDC)</span>
             <span className="text-right">Total (INR)</span>
           </div>
 
-          {/* ASKS (Sell Orders - Red) */}
+          {/* ASKS (On-Chain Sell/Ask Liquidity) */}
           <div className="space-y-0.5">
-            {asks.slice(0, 5).map((ask, idx) => (
-              <div
-                key={idx}
-                onClick={() => onSelectPrice && onSelectPrice(ask.price)}
-                className="relative grid grid-cols-3 py-0.5 px-1 font-mono text-[11px] cursor-pointer hover:bg-rose-50/60 rounded transition-colors group"
-              >
-                {/* Depth bar */}
-                <div
-                  className="absolute right-0 top-0 bottom-0 bg-rose-100/60 rounded-r pointer-events-none"
-                  style={{ width: `${ask.depth}%` }}
-                />
-                <span className="relative z-10 font-bold text-rose-500">
-                  {ask.price.toFixed(2)}
-                </span>
-                <span className="relative z-10 text-right text-slate-700">
-                  {ask.size.toLocaleString(undefined, { minimumFractionDigits: 1 })}
-                </span>
-                <span className="relative z-10 text-right text-slate-400">
-                  ₹{(ask.total / 1000).toFixed(1)}k
-                </span>
+            {asks.length === 0 ? (
+              <div className="py-4 text-center text-[11px] text-slate-400 font-mono">
+                No active asks on Tiramisu
               </div>
-            ))}
+            ) : (
+              asks.map((ask) => (
+                <div
+                  key={ask.key}
+                  onClick={() => {
+                    if (onSelectPrice) onSelectPrice(ask.price);
+                    if (onSelectOrder) onSelectOrder(ask.entity);
+                  }}
+                  className="relative grid grid-cols-3 py-0.5 px-1 font-mono text-[11px] cursor-pointer hover:bg-rose-50/70 rounded transition-colors group"
+                >
+                  <div
+                    className="absolute right-0 top-0 bottom-0 bg-rose-100/60 rounded-r pointer-events-none"
+                    style={{ width: `${Math.max(ask.depth, 10)}%` }}
+                  />
+                  <span className="relative z-10 font-bold text-rose-500">
+                    ₹{ask.price.toFixed(2)}
+                  </span>
+                  <span className="relative z-10 text-right text-slate-700">
+                    {ask.size.toFixed(2)}
+                  </span>
+                  <span className="relative z-10 text-right text-slate-400">
+                    ₹{(ask.total / 1000).toFixed(1)}k
+                  </span>
+                </div>
+              ))
+            )}
           </div>
 
-          {/* Current Mid-Price Divider Bar */}
+          {/* Dynamic Mid-Price Divider Bar */}
           <div className="my-1.5 py-1.5 px-2 bg-slate-50 border-y border-slate-100 rounded flex items-center justify-between">
             <div className="flex items-center gap-1.5">
-              <span className="text-base font-bold text-emerald-600 font-mono">
-                ₹87.50
+              <span className="text-sm font-bold text-emerald-600 font-mono">
+                ₹{midPrice.toFixed(2)}
               </span>
-              <ArrowUpRight className="w-4 h-4 text-emerald-600" />
-              <span className="text-[11px] text-slate-500 font-medium">=$1.00 USDC</span>
+              <ArrowUpRight className="w-3.5 h-3.5 text-emerald-600" />
+              <span className="text-[10px] text-slate-400 font-medium">On-Chain Mid</span>
             </div>
 
             {/* Depth ratio bar */}
             <div className="flex items-center gap-1 text-[10px] font-mono">
-              <span className="text-emerald-600 font-bold">48.2%</span>
+              <span className="text-emerald-600 font-bold">{bidRatio}%</span>
               <div className="w-12 h-1.5 bg-slate-200 rounded-full flex overflow-hidden">
-                <div className="bg-emerald-500 h-full w-[48%]" />
-                <div className="bg-rose-500 h-full w-[52%]" />
+                <div className="bg-emerald-500 h-full" style={{ width: `${bidRatio}%` }} />
+                <div className="bg-rose-500 h-full" style={{ width: `${100 - bidRatio}%` }} />
               </div>
-              <span className="text-rose-500 font-bold">51.8%</span>
+              <span className="text-rose-500 font-bold">{100 - bidRatio}%</span>
             </div>
           </div>
 
-          {/* BIDS (Buy Orders - Green) */}
+          {/* BIDS (On-Chain Buy/Bid Liquidity) */}
           <div className="space-y-0.5">
-            {bids.slice(0, 5).map((bid, idx) => (
-              <div
-                key={idx}
-                onClick={() => onSelectPrice && onSelectPrice(bid.price)}
-                className="relative grid grid-cols-3 py-0.5 px-1 font-mono text-[11px] cursor-pointer hover:bg-emerald-50/60 rounded transition-colors group"
-              >
-                {/* Depth bar */}
-                <div
-                  className="absolute right-0 top-0 bottom-0 bg-emerald-100/60 rounded-r pointer-events-none"
-                  style={{ width: `${bid.depth}%` }}
-                />
-                <span className="relative z-10 font-bold text-emerald-600">
-                  {bid.price.toFixed(2)}
-                </span>
-                <span className="relative z-10 text-right text-slate-700">
-                  {bid.size.toLocaleString(undefined, { minimumFractionDigits: 1 })}
-                </span>
-                <span className="relative z-10 text-right text-slate-400">
-                  ₹{(bid.total / 1000).toFixed(1)}k
-                </span>
+            {bids.length === 0 ? (
+              <div className="py-4 text-center text-[11px] text-slate-400 font-mono">
+                No active bids on Tiramisu
               </div>
-            ))}
+            ) : (
+              bids.map((bid) => (
+                <div
+                  key={bid.key}
+                  onClick={() => {
+                    if (onSelectPrice) onSelectPrice(bid.price);
+                    if (onSelectOrder) onSelectOrder(bid.entity);
+                  }}
+                  className="relative grid grid-cols-3 py-0.5 px-1 font-mono text-[11px] cursor-pointer hover:bg-emerald-50/70 rounded transition-colors group"
+                >
+                  <div
+                    className="absolute right-0 top-0 bottom-0 bg-emerald-100/60 rounded-r pointer-events-none"
+                    style={{ width: `${Math.max(bid.depth, 10)}%` }}
+                  />
+                  <span className="relative z-10 font-bold text-emerald-600">
+                    ₹{bid.price.toFixed(2)}
+                  </span>
+                  <span className="relative z-10 text-right text-slate-700">
+                    {bid.size.toFixed(2)}
+                  </span>
+                  <span className="relative z-10 text-right text-slate-400">
+                    ₹{(bid.total / 1000).toFixed(1)}k
+                  </span>
+                </div>
+              ))
+            )}
           </div>
         </div>
       ) : (
-        /* RECENT TRADES TAB */
+        /* RECENT TRADES TAB (From Settled Arkiv Entities) */
         <div className="flex-1 my-2 overflow-y-auto space-y-1">
           <div className="grid grid-cols-3 text-[10px] font-semibold text-slate-400 uppercase py-1 px-1">
             <span>Price</span>
-            <span className="text-right">Amount</span>
-            <span className="text-right">Time</span>
+            <span className="text-right">Amount (USDC)</span>
+            <span className="text-right">Settled Time</span>
           </div>
 
-          {[
-            { price: 87.50, size: 57.47, time: "13:04:12", isBuy: true },
-            { price: 87.50, size: 120.0, time: "13:03:55", isBuy: true },
-            { price: 87.48, size: 85.0, time: "13:02:40", isBuy: false },
-            { price: 87.52, size: 210.0, time: "13:01:18", isBuy: true },
-            { price: 87.45, size: 500.0, time: "12:59:02", isBuy: false },
-            { price: 87.50, size: 75.0, time: "12:58:33", isBuy: true },
-          ].map((t, idx) => (
-            <div key={idx} className="grid grid-cols-3 py-1 px-1 text-[11px] font-mono hover:bg-slate-50 rounded">
-              <span className={t.isBuy ? "text-emerald-600 font-bold" : "text-rose-500 font-bold"}>
-                ₹{t.price.toFixed(2)}
-              </span>
-              <span className="text-right text-slate-700">{t.size.toFixed(2)}</span>
-              <span className="text-right text-slate-400">{t.time}</span>
+          {recentTrades.length === 0 ? (
+            <div className="py-12 text-center text-slate-400 text-xs">
+              <Clock className="w-6 h-6 text-slate-300 mx-auto mb-1" />
+              <p>No settled on-chain trades yet.</p>
+              <p className="text-[10px] text-slate-400 mt-0.5">
+                Lock an order and submit a zkTLS proof to record settlements.
+              </p>
             </div>
-          ))}
+          ) : (
+            recentTrades.map((t) => (
+              <div
+                key={t.key}
+                className="grid grid-cols-3 py-1.5 px-1 text-[11px] font-mono hover:bg-slate-50 rounded border-b border-slate-50"
+              >
+                <span className="text-emerald-600 font-bold">₹{t.price.toFixed(2)}</span>
+                <span className="text-right text-slate-700">{t.size.toFixed(2)}</span>
+                <span className="text-right text-slate-400">{t.time}</span>
+              </div>
+            ))
+          )}
         </div>
       )}
 
-      {/* Footer spread info */}
+      {/* Footer Info */}
       <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400 font-mono">
-        <span>Arkiv DB-Chain Orderbook</span>
-        <span className="text-emerald-600 font-medium">Spread: ₹0.15 (0.17%)</span>
+        <span>Arkiv queryEntities</span>
+        <span className="text-emerald-600 font-medium">Spread: ₹{spread.toFixed(2)}</span>
       </div>
     </div>
   );

@@ -238,6 +238,7 @@ export default function Home() {
           onToggleDemoMode={() => setIsJudgeDemoActive(!isJudgeDemoActive)}
           onConnectWallet={handleConnectMetaMask}
           isMetaMaskConnected={isMetaMask}
+          orders={orders}
         />
 
         {/* Inner Content Area */}
@@ -369,7 +370,7 @@ export default function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
             {/* Left Area: Price Chart (7 cols) */}
             <div className="lg:col-span-6 xl:col-span-6">
-              <PriceChart />
+              <PriceChart orders={orders} />
             </div>
 
             {/* Middle Area: Order Book Terminal (3 cols) */}
