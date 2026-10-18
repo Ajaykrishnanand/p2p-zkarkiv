@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   Plus,
   ArrowRight,
@@ -203,10 +203,16 @@ export default function Home() {
     setIsMetaMask(false);
   };
 
+  const isFetchingRef = useRef<boolean>(false);
+  const prevOrdersHashRef = useRef<string>("");
+
   // Fetch orders from Arkiv DB-Chain
-  const fetchOrders = useCallback(async () => {
+  const fetchOrders = useCallback(async (isSilent = true) => {
+    if (isFetchingRef.current) return;
+    isFetchingRef.current = true;
+
     try {
-      setIsLoading(true);
+      if (!isSilent) setIsLoading(true);
       // Try local API route first, fallback to client direct RPC
       let res: P2POrderEntity[] = [];
       try {
@@ -222,25 +228,36 @@ export default function Home() {
       if (!res || res.length === 0) {
         res = await queryOpenInrOrders(walletAccount?.address);
       }
-      setOrders(res);
+
+      // Compute data fingerprint to avoid re-renders if data has not changed
+      const newHash = (res || [])
+        .map(
+          (o) =>
+            `${o.key}:${o.attributes?.status}:${o.attributes?.amountInr}:${o.attributes?.rate}:${o.data?.takerAddress || ""}:${o.data?.settledAt || ""}`
+        )
+        .join("|");
+
+      if (newHash !== prevOrdersHashRef.current) {
+        prevOrdersHashRef.current = newHash;
+        setOrders(res);
+      }
     } catch (err) {
       console.warn("Failed to query Arkiv entities:", err);
     } finally {
+      isFetchingRef.current = false;
       setIsLoading(false);
     }
   }, [walletAccount?.address]);
 
-  // Real-time Arkiv WebSocket stream: auto-refreshes orderbook when new block is mined
-  const wsStatus = useArkivWebSocket(
-    useCallback(() => {
-      fetchOrders();
-    }, [fetchOrders])
-  );
+  // Real-time Arkiv WebSocket stream (monitors live block height for header status badge)
+  const wsStatus = useArkivWebSocket();
 
-  // Initial fetch and 8s reconciliation poll
+  // Initial fetch (with loader) and calm 25s reconciliation poll (silent, no flicker)
   useEffect(() => {
-    fetchOrders();
-    const interval = setInterval(fetchOrders, 8000);
+    fetchOrders(false);
+    const interval = setInterval(() => {
+      fetchOrders(true);
+    }, 25000);
     return () => clearInterval(interval);
   }, [fetchOrders]);
 

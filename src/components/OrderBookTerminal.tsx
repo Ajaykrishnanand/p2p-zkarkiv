@@ -10,7 +10,7 @@ interface OrderBookTerminalProps {
   onSelectOrder?: (order: P2POrderEntity) => void;
 }
 
-export const OrderBookTerminal: React.FC<OrderBookTerminalProps> = ({
+const OrderBookTerminalComponent: React.FC<OrderBookTerminalProps> = ({
   orders,
   onSelectPrice,
   onSelectOrder,
@@ -302,3 +302,23 @@ export const OrderBookTerminal: React.FC<OrderBookTerminalProps> = ({
     </div>
   );
 };
+
+export const OrderBookTerminal = React.memo(OrderBookTerminalComponent, (prevProps, nextProps) => {
+  if (prevProps.orders === nextProps.orders && prevProps.onSelectPrice === nextProps.onSelectPrice && prevProps.onSelectOrder === nextProps.onSelectOrder) {
+    return true;
+  }
+  const prev = prevProps.orders || [];
+  const next = nextProps.orders || [];
+  if (prev.length !== next.length) return false;
+  for (let i = 0; i < prev.length; i++) {
+    if (
+      prev[i].key !== next[i].key ||
+      prev[i].attributes?.status !== next[i].attributes?.status ||
+      prev[i].attributes?.amountInr !== next[i].attributes?.amountInr ||
+      prev[i].attributes?.rate !== next[i].attributes?.rate
+    ) {
+      return false;
+    }
+  }
+  return true;
+});

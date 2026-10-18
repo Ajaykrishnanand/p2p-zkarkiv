@@ -24,7 +24,7 @@ interface LiveOrderbookProps {
   onInspectEntity: (order: P2POrderEntity) => void;
 }
 
-export const LiveOrderbook: React.FC<LiveOrderbookProps> = ({
+const LiveOrderbookComponent: React.FC<LiveOrderbookProps> = ({
   orders,
   isLoading,
   onRefresh,
@@ -296,3 +296,30 @@ export const LiveOrderbook: React.FC<LiveOrderbookProps> = ({
     </div>
   );
 };
+
+export const LiveOrderbook = React.memo(LiveOrderbookComponent, (prevProps, nextProps) => {
+  if (
+    prevProps.isLoading === nextProps.isLoading &&
+    prevProps.orders === nextProps.orders &&
+    prevProps.onRefresh === nextProps.onRefresh &&
+    prevProps.onSelectOrderToLock === nextProps.onSelectOrderToLock &&
+    prevProps.onInspectEntity === nextProps.onInspectEntity
+  ) {
+    return true;
+  }
+  if (prevProps.isLoading !== nextProps.isLoading) return false;
+  const prev = prevProps.orders || [];
+  const next = nextProps.orders || [];
+  if (prev.length !== next.length) return false;
+  for (let i = 0; i < prev.length; i++) {
+    if (
+      prev[i].key !== next[i].key ||
+      prev[i].attributes?.status !== next[i].attributes?.status ||
+      prev[i].attributes?.amountInr !== next[i].attributes?.amountInr ||
+      prev[i].attributes?.rate !== next[i].attributes?.rate
+    ) {
+      return false;
+    }
+  }
+  return true;
+});

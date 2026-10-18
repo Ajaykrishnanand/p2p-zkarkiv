@@ -22,7 +22,7 @@ interface PriceChartProps {
   orders?: P2POrderEntity[];
 }
 
-export const PriceChart: React.FC<PriceChartProps> = ({ orders = [] }) => {
+const PriceChartComponent: React.FC<PriceChartProps> = ({ orders = [] }) => {
   const [selectedRange, setSelectedRange] = useState<string>("1D");
   const [currency, setCurrency] = useState<string>("INR");
   const [hoveredCandle, setHoveredCandle] = useState<CandleItem | null>(null);
@@ -52,7 +52,11 @@ export const PriceChart: React.FC<PriceChartProps> = ({ orders = [] }) => {
       const high = Math.max(open, close) + 0.15;
       const low = Math.min(open, close) - 0.15;
 
-      const dateObj = order.data?.createdAt ? new Date(order.data.createdAt) : new Date();
+      // Deterministic timestamp: use order.data.createdAt if available, or a static index offset
+      const timestamp = order.data?.createdAt
+        ? new Date(order.data.createdAt).getTime()
+        : 1739900000000 + idx * 120000;
+      const dateObj = new Date(timestamp);
       const timeStr = dateObj.toLocaleTimeString("en-IN", {
         hour12: false,
         hour: "2-digit",
@@ -325,3 +329,25 @@ export const PriceChart: React.FC<PriceChartProps> = ({ orders = [] }) => {
     </div>
   );
 };
+
+function arePriceChartPropsEqual(prevProps: PriceChartProps, nextProps: PriceChartProps): boolean {
+  if (prevProps.orders === nextProps.orders) return true;
+  const prev = prevProps.orders || [];
+  const next = nextProps.orders || [];
+  if (prev.length !== next.length) return false;
+  for (let i = 0; i < prev.length; i++) {
+    const p = prev[i];
+    const n = next[i];
+    if (
+      p.key !== n.key ||
+      p.attributes?.status !== n.attributes?.status ||
+      p.attributes?.amountInr !== n.attributes?.amountInr ||
+      p.attributes?.rate !== n.attributes?.rate
+    ) {
+      return false;
+    }
+  }
+  return true;
+}
+
+export const PriceChart = React.memo(PriceChartComponent, arePriceChartPropsEqual);
