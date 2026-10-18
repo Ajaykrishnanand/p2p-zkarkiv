@@ -105,13 +105,13 @@ export async function createP2POrder(
 
   return await walletClient.createEntity({
     attributes: {
-      appId: str(APP_ID),
-      entityType: str("p2p_order"),
+      app_id: str(APP_ID),
+      entity_type: str("p2p_order"),
       status: str("OPEN"),
-      fiatCurrency: str("INR"),
-      amountInr: u256(BigInt(Math.round(params.amountInr))),
+      fiat_currency: str("INR"),
+      amount_inr: u256(BigInt(Math.round(params.amountInr))),
       rate: u256(BigInt(Math.round(params.rateInrPerUsdc))),
-      zkVerified: bool(false),
+      zk_verified: bool(false),
     },
     payload: jsonToPayload(payloadData),
     contentType: CONTENT_TYPE_JSON,
@@ -127,9 +127,9 @@ export async function createP2POrder(
 export async function queryOpenInrOrders(maxRate?: number): Promise<P2POrderEntity[]> {
   try {
     const baseFilter = and(
-      eq("appId", str(APP_ID)),
-      eq("entityType", str("p2p_order")),
-      eq("fiatCurrency", str("INR"))
+      eq("app_id", str(APP_ID)),
+      eq("entity_type", str("p2p_order")),
+      eq("fiat_currency", str("INR"))
     );
 
     const filter = maxRate
@@ -141,7 +141,14 @@ export async function queryOpenInrOrders(maxRate?: number): Promise<P2POrderEnti
 
     return entities.map((entity: any) => ({
       key: entity.key,
-      attributes: entity.attributes,
+      attributes: {
+        ...entity.attributes,
+        amountInr: entity.attributes?.amount_inr ?? entity.attributes?.amountInr,
+        appId: entity.attributes?.app_id ?? entity.attributes?.appId,
+        entityType: entity.attributes?.entity_type ?? entity.attributes?.entityType,
+        fiatCurrency: entity.attributes?.fiat_currency ?? entity.attributes?.fiatCurrency,
+        zkVerified: entity.attributes?.zk_verified ?? entity.attributes?.zkVerified,
+      },
       data: payloadToJson<P2POrderPayload>(entity.payload),
       expiresAt: entity.expiresAt,
     }));
@@ -223,10 +230,10 @@ export async function settleOrderWithZkTlsProof(
   // Create immutable UTR nullifier receipt
   const nullifierTx = await walletClient.createEntity({
     attributes: {
-      appId: str(APP_ID),
-      entityType: str("utr_nullifier"),
-      nullifierHash: str(zkBundle.nullifierHash),
-      orderKey: str(orderEntityKey),
+      app_id: str(APP_ID),
+      entity_type: str("utr_nullifier"),
+      nullifier_hash: str(zkBundle.nullifierHash),
+      order_key: str(orderEntityKey),
     },
     payload: jsonToPayload({
       orderKey: orderEntityKey,
@@ -244,7 +251,7 @@ export async function settleOrderWithZkTlsProof(
     key: orderEntityKey,
     attributes: {
       status: str("SETTLED"),
-      zkVerified: bool(true),
+      zk_verified: bool(true),
     },
     payload: jsonToPayload({
       ...existingPayload,
