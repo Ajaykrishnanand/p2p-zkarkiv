@@ -17,6 +17,7 @@ import { TradeExecutionPanel } from "@/components/TradeExecutionPanel";
 import { LiveOrderbook } from "@/components/LiveOrderbook";
 import { ZkSettlementModal } from "@/components/ZkSettlementModal";
 import { ExplorerInspector } from "@/components/ExplorerInspector";
+import { UpiMobileSimulatorModal } from "@/components/UpiMobileSimulatorModal";
 import {
   P2POrderEntity,
   createP2POrder,
@@ -48,6 +49,7 @@ export default function Home() {
   // Modals
   const [orderToLock, setOrderToLock] = useState<P2POrderEntity | null>(null);
   const [inspectedEntity, setInspectedEntity] = useState<P2POrderEntity | null>(null);
+  const [isUpiSimulatorOpen, setIsUpiSimulatorOpen] = useState<boolean>(false);
 
   // Check existing MetaMask authorization on mount and listen to account changes
   useEffect(() => {
@@ -260,7 +262,9 @@ export default function Home() {
   return (
     <div className="flex min-h-screen bg-slate-50 text-slate-900 font-sans antialiased">
       {/* Left Slim Navigation Rail */}
-      <LeftNavigationRail />
+      <LeftNavigationRail
+        onOpenUpiSimulator={() => setIsUpiSimulatorOpen(true)}
+      />
 
       {/* Main Terminal Body */}
       <div className="flex-1 flex flex-col min-w-0">
@@ -269,6 +273,7 @@ export default function Home() {
           walletAddress={walletAccount?.address || ""}
           onConnectWallet={handleConnectMetaMask}
           onDisconnectWallet={handleDisconnectMetaMask}
+          onOpenUpiSimulator={() => setIsUpiSimulatorOpen(true)}
           isMetaMaskConnected={isMetaMask}
           orders={orders}
           wsBlock={wsStatus.latestBlock}
@@ -344,6 +349,11 @@ export default function Home() {
         isOpen={!!inspectedEntity}
         onClose={() => setInspectedEntity(null)}
         entity={inspectedEntity}
+      />
+
+      <UpiMobileSimulatorModal
+        isOpen={isUpiSimulatorOpen}
+        onClose={() => setIsUpiSimulatorOpen(false)}
       />
     </div>
   );

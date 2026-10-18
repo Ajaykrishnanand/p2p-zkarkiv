@@ -13,6 +13,7 @@ import {
   Zap,
   ArrowUpRight,
   BookOpen,
+  Smartphone,
 } from "lucide-react";
 import { TIRAMISU_CHAIN_ID, ARKIV_EXPLORER_URL } from "@/lib/arkivClient";
 import { P2POrderEntity } from "@/lib/arkivOrderbook";
@@ -23,6 +24,7 @@ interface NavbarProps {
   onToggleDemoMode?: () => void;
   onConnectWallet?: () => void;
   onDisconnectWallet?: () => void;
+  onOpenUpiSimulator?: () => void;
   isMetaMaskConnected?: boolean;
   orders?: P2POrderEntity[];
   wsBlock?: string | null;
@@ -33,6 +35,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   walletAddress,
   onConnectWallet,
   onDisconnectWallet,
+  onOpenUpiSimulator,
   isMetaMaskConnected,
   orders = [],
   wsBlock,
@@ -251,6 +254,19 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </button>
               )}
             </div>
+          )}
+
+          {/* Interactive UPI Mobile Simulator Trigger Button */}
+          {onOpenUpiSimulator && (
+            <button
+              onClick={onOpenUpiSimulator}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs border border-indigo-200 transition-all shadow-2xs cursor-pointer active:scale-95"
+              title="Open Interactive UPI Mobile Simulator with zkTLS Prover"
+            >
+              <Smartphone className="w-3.5 h-3.5 text-indigo-600" />
+              <span className="hidden sm:inline">UPI Simulator (zkTLS)</span>
+              <span className="sm:hidden">Simulator</span>
+            </button>
           )}
 
           {/* How to Use Guide Link */}

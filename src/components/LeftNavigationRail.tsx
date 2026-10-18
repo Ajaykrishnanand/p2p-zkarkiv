@@ -11,9 +11,16 @@ import {
   Activity,
   HelpCircle,
   ShieldCheck,
+  Smartphone,
 } from "lucide-react";
 
-export const LeftNavigationRail: React.FC = () => {
+interface LeftNavigationRailProps {
+  onOpenUpiSimulator?: () => void;
+}
+
+export const LeftNavigationRail: React.FC<LeftNavigationRailProps> = ({
+  onOpenUpiSimulator,
+}) => {
   const [activeItem, setActiveItem] = React.useState<string>("Spot");
 
   const navItems = [
@@ -59,8 +66,19 @@ export const LeftNavigationRail: React.FC = () => {
         </nav>
       </div>
 
-      {/* Bottom Help Icon */}
-      <div className="flex flex-col items-center gap-3">
+      {/* Bottom Actions: Simulator & Help */}
+      <div className="flex flex-col items-center gap-2">
+        {onOpenUpiSimulator && (
+          <button
+            onClick={onOpenUpiSimulator}
+            className="w-12 h-12 rounded-2xl bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 flex flex-col items-center justify-center gap-0.5 transition-all shadow-2xs active:scale-95 cursor-pointer"
+            title="Open Interactive UPI Mobile Simulator (zkTLS)"
+          >
+            <Smartphone className="w-4 h-4 text-indigo-600" />
+            <span className="text-[8px] font-bold">Simulator</span>
+          </button>
+        )}
+
         <a
           href="https://github.com/Ajaykrishnanand/p2p-zkarkiv/blob/main/HOW_TO_USE.md"
           target="_blank"
