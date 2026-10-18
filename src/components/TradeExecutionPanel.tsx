@@ -112,13 +112,32 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
   const isSellBlockedNoEscrow = isSell && escrowAvailable <= 0;
   const isSellBlockedExceedsEscrow = isSell && escrowAvailable > 0 && numUsdcQuantity > escrowAvailable;
 
+  // Dynamically synchronize default amount to deposited escrow when on SELL side
+  useEffect(() => {
+    if (tradeSide === "SELL") {
+      if (depositedEscrowUsdc > 0) {
+        setAmountInr(Math.round(depositedEscrowUsdc * limitPrice));
+      } else {
+        setAmountInr(0);
+      }
+    } else {
+      if (amountInr <= 0 || (depositedEscrowUsdc > 0 && amountInr === Math.round(depositedEscrowUsdc * limitPrice))) {
+        setAmountInr(5000);
+      }
+    }
+  }, [tradeSide, depositedEscrowUsdc, limitPrice]);
+
   const handleSliderChange = (pct: number) => {
     setPercentSlider(pct);
-    if (isSell && escrowAvailable > 0) {
-      // Scale according to deposited escrow balance
-      const calculatedUsdc = (escrowAvailable * pct) / 100;
-      const inrAmount = Math.max(Math.round(calculatedUsdc * limitPrice), 100);
-      setAmountInr(inrAmount);
+    if (isSell) {
+      if (escrowAvailable > 0) {
+        // Scale according to deposited escrow balance
+        const calculatedUsdc = (escrowAvailable * pct) / 100;
+        const inrAmount = Math.round(calculatedUsdc * limitPrice);
+        setAmountInr(inrAmount);
+      } else {
+        setAmountInr(0);
+      }
     } else {
       const calculated = Math.round((10000 * (pct / 100)) / 100) * 100;
       setAmountInr(Math.max(calculated, 500));
@@ -416,28 +435,57 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
           <div className="grid grid-cols-2 gap-2">
             <div>
               <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                Amount (INR)
+                {isSell ? "Receive (INR)" : "Amount (INR)"}
               </label>
               <input
                 type="number"
-                step="100"
-                value={amountInr}
-                onChange={(e) => setAmountInr(Number(e.target.value))}
+                step="10"
+                value={amountInr === 0 ? "" : amountInr}
+                placeholder={isSell ? "0" : "5000"}
+                onChange={(e) => setAmountInr(Number(e.target.value) || 0)}
                 className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs font-mono font-bold text-slate-900 focus:outline-none focus:border-emerald-500"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                USDC Payout
-              </label>
-              <input
-                type="text"
-                readOnly
-                value={usdcQuantity}
-                className="w-full bg-slate-100 border border-slate-200 rounded-lg px-3 py-2 text-xs font-mono font-bold text-emerald-700 cursor-not-allowed"
-              />
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-[11px] font-semibold text-slate-600">
+                  {isSell ? "USDC to Sell" : "USDC Payout"}
+                </label>
+                {isSell && escrowAvailable > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setAmountInr(Math.round(escrowAvailable * limitPrice))}
+                    className="text-[10px] text-blue-600 font-bold hover:underline cursor-pointer"
+                  >
+                    MAX ({escrowAvailable.toFixed(2)})
+                  </button>
+                )}
+              </div>
+              <div className="relative">
+                <input
+                  type="number"
+                  step="0.01"
+                  value={numUsdcQuantity === 0 ? "" : usdcQuantity}
+                  placeholder={isSell ? (escrowAvailable > 0 ? escrowAvailable.toFixed(2) : "0.00") : "57.14"}
+                  onChange={(e) => {
+                    if (isSell) {
+                      const val = parseFloat(e.target.value) || 0;
+                      setAmountInr(Math.round(val * limitPrice));
+                    }
+                  }}
+                  className={`w-full border rounded-lg px-3 py-2 text-xs font-mono font-bold pr-12 ${
+                    isSell
+                      ? "bg-slate-50 border-slate-200 text-slate-900 focus:outline-none focus:border-rose-500"
+                      : "bg-slate-100 border-slate-200 text-emerald-700 cursor-not-allowed"
+                  }`}
+                  readOnly={!isSell}
+                />
+                <span className="absolute right-3 top-2 text-[10px] font-bold text-slate-400">
+                  USDC
+                </span>
+              </div>
             </div>
           </div>
 

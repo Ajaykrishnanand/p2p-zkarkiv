@@ -41,8 +41,8 @@ export const BaseEscrowModal: React.FC<BaseEscrowModalProps> = ({
   onClose,
   walletAddress,
   defaultOrderId = "",
-  defaultUsdcAmount = "57.14",
-  defaultAmountInr = 5000,
+  defaultUsdcAmount = "1.50",
+  defaultAmountInr = 131,
   onDepositSuccess,
 }) => {
   const [currentChainId, setCurrentChainId] = useState<number | null>(null);
@@ -268,7 +268,7 @@ export const BaseEscrowModal: React.FC<BaseEscrowModalProps> = ({
     setDepositSuccessTx(fakeTx);
     setErrorMsg(null);
     if (onDepositSuccess) {
-      onDepositSuccess(Number(usdcAmount) || 57.14, fakeTx);
+      onDepositSuccess(Number(usdcAmount) || 1.5, fakeTx);
     }
   };
 
@@ -430,7 +430,7 @@ export const BaseEscrowModal: React.FC<BaseEscrowModalProps> = ({
                     value={usdcAmount}
                     onChange={(e) => setUsdcAmount(e.target.value)}
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono text-slate-800 text-xs focus:outline-none focus:border-blue-500 pr-12"
-                    placeholder="57.14"
+                    placeholder="1.50"
                   />
                   <span className="absolute right-3 top-2 text-slate-400 font-bold text-[10px]">
                     USDC
