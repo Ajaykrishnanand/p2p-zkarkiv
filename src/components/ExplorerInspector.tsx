@@ -37,12 +37,12 @@ export const ExplorerInspector: React.FC<ExplorerInspectorProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-end bg-slate-900/30 backdrop-blur-xs animate-fadeIn">
-      <div className="relative h-full w-full max-w-xl border-l border-slate-200 bg-white p-6 shadow-2xl flex flex-col justify-between overflow-y-auto text-slate-800">
+      <div className="relative h-full w-full max-w-xl border-l border-[#F0E4D7] bg-white p-6 shadow-2xl flex flex-col justify-between overflow-y-auto text-slate-800">
         <div>
           {/* Header */}
-          <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+          <div className="flex items-center justify-between pb-4 border-b border-[#F5ECE2]">
             <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-xl bg-blue-50 text-blue-600 border border-blue-200">
+              <div className="p-2 rounded-xl bg-[#FFF2EF] text-[#EA3815] border border-[#FDCAC0]">
                 <Database className="w-5 h-5" />
               </div>
               <div>
@@ -59,10 +59,10 @@ export const ExplorerInspector: React.FC<ExplorerInspectorProps> = ({
           </div>
 
           {/* 32-Byte Entity Key */}
-          <div className="my-5 p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+          <div className="my-5 p-3.5 rounded-xl bg-[#FAF6F0] border border-[#F0E4D7] space-y-1.5">
             <div className="flex items-center justify-between text-xs text-slate-500">
               <span className="flex items-center gap-1 font-semibold text-slate-700">
-                <Layers className="w-3.5 h-3.5 text-blue-600" />
+                <Layers className="w-3.5 h-3.5 text-[#EA3815]" />
                 Entity Key (32-Byte Hex)
               </span>
               <div className="flex items-center gap-2">
@@ -82,7 +82,7 @@ export const ExplorerInspector: React.FC<ExplorerInspectorProps> = ({
                   href={`${ARKIV_EXPLORER_URL}/entity/${entity.key}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="hover:text-blue-800 flex items-center gap-1 transition-colors text-blue-600 font-semibold text-[11px]"
+                  className="hover:text-[#9A2207] flex items-center gap-1 transition-colors text-[#EA3815] font-semibold text-[11px]"
                   title="Open in Tiramisu Explorer"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
@@ -90,13 +90,13 @@ export const ExplorerInspector: React.FC<ExplorerInspectorProps> = ({
                 </a>
               </div>
             </div>
-            <div className="font-mono text-xs text-slate-800 break-all select-all bg-white p-2 rounded-lg border border-slate-200">
+            <div className="font-mono text-xs text-slate-800 break-all select-all bg-white p-2 rounded-lg border border-[#F0E4D7]">
               {entity.key}
             </div>
           </div>
 
           {/* Tabs */}
-          <div className="flex border-b border-slate-200 text-xs mb-4">
+          <div className="flex border-b border-[#F0E4D7] text-xs mb-4">
             {[
               { id: "ATTRIBUTES", label: "Indexed Attributes" },
               { id: "PAYLOAD", label: "Decoded Payload" },
@@ -107,7 +107,7 @@ export const ExplorerInspector: React.FC<ExplorerInspectorProps> = ({
                 onClick={() => setActiveTab(tab.id as any)}
                 className={`px-3 py-2 font-bold border-b-2 transition-all ${
                   activeTab === tab.id
-                    ? "border-blue-600 text-blue-600 bg-blue-50/50"
+                    ? "border-[#EA3815] text-[#EA3815] bg-[#FFF2EF]"
                     : "border-transparent text-slate-400 hover:text-slate-700"
                 }`}
               >

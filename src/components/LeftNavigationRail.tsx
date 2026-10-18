@@ -39,12 +39,14 @@ export const LeftNavigationRail: React.FC<LeftNavigationRailProps> = ({
       <div className="flex flex-col items-center gap-6 w-full">
         {/* PhantomUPI Brand Logo at Top */}
         <div
-          title="PhantomUPI — Censorship-Resistant ZK P2P on Arkiv"
-          className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-emerald-500 p-0.5 flex items-center justify-center shadow-md cursor-pointer hover:scale-105 transition-transform group"
+          title="Phantom UPI — Censorship-Resistant ZK P2P on Arkiv"
+          className="w-11 h-11 rounded-xl p-0.5 bg-[#FFF2EF] border border-[#FDCAC0] shadow-sm flex items-center justify-center cursor-pointer hover:scale-105 transition-transform overflow-hidden"
         >
-          <div className="w-full h-full bg-slate-900 rounded-[10px] flex items-center justify-center relative">
-            <Ghost className="w-5 h-5 text-emerald-400 group-hover:text-emerald-300 transition-colors" />
-          </div>
+          <img
+            src="/logo.png"
+            alt="Phantom UPI"
+            className="w-full h-full object-cover rounded-[9px]"
+          />
         </div>
 
         {/* Navigation Items */}
@@ -58,11 +60,11 @@ export const LeftNavigationRail: React.FC<LeftNavigationRailProps> = ({
                 onClick={() => setActiveItem(item.id)}
                 className={`w-full py-2.5 rounded-xl flex flex-col items-center justify-center gap-1 transition-all ${
                   isActive
-                    ? "bg-slate-100 text-slate-900 font-bold shadow-xs"
-                    : "text-slate-400 hover:text-slate-700 hover:bg-slate-50"
+                    ? "bg-[#FFF2EF] text-[#EA3815] font-bold shadow-2xs border-r-2 border-[#EA3815]"
+                    : "text-slate-400 hover:text-slate-700 hover:bg-[#FAF5EE]"
                 }`}
               >
-                <Icon className={`w-4 h-4 ${isActive ? "text-blue-600" : ""}`} />
+                <Icon className={`w-4 h-4 ${isActive ? "text-[#EA3815]" : ""}`} />
                 <span className="text-[9px] font-medium leading-none">{item.label}</span>
               </button>
             );

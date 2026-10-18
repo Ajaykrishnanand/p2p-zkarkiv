@@ -108,12 +108,12 @@ const PriceChartComponent: React.FC<PriceChartProps> = ({ orders = [] }) => {
       <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
         <div className="flex items-center gap-3">
           <span className="font-bold text-slate-900 text-sm flex items-center gap-2">
-            <BarChart2 className="w-4 h-4 text-emerald-600" />
+            <BarChart2 className="w-4 h-4 text-[#EA3815]" />
             USDC/INR Live Price Chart
           </span>
 
-          <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-mono font-bold border border-emerald-200 flex items-center gap-1.5 shadow-2xs">
-            <Radio className="w-2.5 h-2.5 animate-pulse text-emerald-600" />
+          <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-[#FFF2EF] text-[#B82B0B] font-mono font-bold border border-[#FDCAC0] flex items-center gap-1.5 shadow-2xs">
+            <Radio className="w-2.5 h-2.5 animate-pulse text-[#EA3815]" />
             Arkiv DB-Chain Feed ({orders.length} Entities Indexed)
           </span>
         </div>
@@ -306,7 +306,7 @@ const PriceChartComponent: React.FC<PriceChartProps> = ({ orders = [] }) => {
               onClick={() => setSelectedRange(range)}
               className={`px-2 py-0.5 rounded text-[11px] font-semibold transition-colors ${
                 selectedRange === range
-                  ? "bg-slate-900 text-white shadow-2xs"
+                  ? "bg-[#EA3815] text-white shadow-2xs font-bold"
                   : "text-slate-500 hover:text-slate-800"
               }`}
             >
@@ -320,7 +320,7 @@ const PriceChartComponent: React.FC<PriceChartProps> = ({ orders = [] }) => {
             24h Vol: <strong className="text-slate-700">₹{(totalVolumeInr).toLocaleString("en-IN")}</strong>
           </span>
           <span className="text-slate-300">|</span>
-          <span className="text-emerald-600 font-bold flex items-center gap-1">
+          <span className="text-[#EA3815] font-bold flex items-center gap-1">
             <RefreshCw className="w-3 h-3 animate-spin" />
             Live Arkiv Synced
           </span>

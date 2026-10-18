@@ -72,7 +72,7 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
           <div>
             <h3 className="text-lg font-bold text-white flex items-center gap-2">
               <span>Post P2P Liquidity Order</span>
-              <span className="text-xs px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">
+              <span className="text-xs px-2 py-0.5 rounded-md bg-[#EA3815]/15 text-[#FF5E3A] border border-[#EA3815]/30 font-mono">
                 createEntity
               </span>
             </h3>
@@ -204,7 +204,7 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
                   onClick={() => setTtlMinutes(item.value)}
                   className={`py-1.5 rounded-lg text-xs font-mono font-medium border transition-colors ${
                     ttlMinutes === item.value
-                      ? "bg-emerald-950/60 border-emerald-500 text-emerald-300"
+                      ? "bg-[#EA3815]/20 border-[#EA3815] text-[#FF5E3A]"
                       : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200"
                   }`}
                 >
@@ -228,7 +228,7 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
             <button
               type="submit"
               disabled={isSubmitting || !isAliasValid}
-              className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-900/30 disabled:opacity-50 transition-all"
+              className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#EA3815] to-[#FF5E3A] hover:opacity-95 text-white font-semibold text-sm flex items-center justify-center gap-2 shadow-lg shadow-[#EA3815]/30 disabled:opacity-50 transition-all cursor-pointer"
             >
               {isSubmitting ? (
                 <span>Writing to Arkiv DB-Chain...</span>

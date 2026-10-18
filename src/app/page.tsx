@@ -370,7 +370,7 @@ export default function Home() {
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-50 text-slate-900 font-sans antialiased">
+    <div className="flex min-h-screen bg-transparent text-slate-900 font-sans antialiased">
       {/* Left Slim Navigation Rail */}
       <LeftNavigationRail
         onOpenUpiSimulator={() => setIsUpiSimulatorOpen(true)}
@@ -439,7 +439,7 @@ export default function Home() {
           </div>
 
           {/* Footer matching reference image */}
-          <footer className="pt-6 pb-4 border-t border-slate-200 flex flex-wrap items-center justify-between gap-4 text-xs text-slate-400">
+          <footer className="pt-6 pb-4 border-t border-[#F0E4D7] flex flex-wrap items-center justify-between gap-4 text-xs text-slate-400">
             <div className="flex items-center gap-4">
               <a href="#" className="hover:text-slate-600 transition-colors">Terms & Conditions</a>
               <span>|</span>
@@ -448,7 +448,7 @@ export default function Home() {
               <a href="https://docs.arkiv.network" target="_blank" rel="noreferrer" className="hover:text-slate-600 transition-colors">Support & Docs</a>
             </div>
             <div>
-              © 2026 PhantomUPI — All rights reserved. Powered by Arkiv DB-Chain & Golem Network.
+              © 2026 Phantom UPI — All rights reserved. Powered by Arkiv DB-Chain & Golem Network.
             </div>
           </footer>
         </div>

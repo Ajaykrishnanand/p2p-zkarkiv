@@ -119,20 +119,24 @@ const OrderBookTerminalComponent: React.FC<OrderBookTerminalProps> = ({
   }, [orders]);
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm flex flex-col justify-between h-[560px] text-xs">
+    <div className="bg-white rounded-2xl border border-[#F0E4D7] p-4 shadow-sm flex flex-col justify-between h-[560px] text-xs">
       {/* Header Tabs */}
-      <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
+      <div className="flex items-center justify-between pb-2.5 border-b border-[#F5ECE2]">
         <div className="flex items-center gap-4">
           <button
             onClick={() => setActiveTab("BOOK")}
             className={`font-bold pb-1 transition-colors flex items-center gap-1.5 ${
               activeTab === "BOOK"
-                ? "text-slate-900 border-b-2 border-slate-900"
+                ? "text-[#EA3815] border-b-2 border-[#EA3815]"
                 : "text-slate-400 hover:text-slate-600"
             }`}
           >
             <span>Order book</span>
-            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-100 text-slate-700">
+            <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded ${
+              activeTab === "BOOK"
+                ? "bg-[#FFF2EF] text-[#EA3815] font-semibold"
+                : "bg-slate-100 text-slate-700"
+            }`}>
               {asks.length + bids.length}
             </span>
           </button>
@@ -140,19 +144,23 @@ const OrderBookTerminalComponent: React.FC<OrderBookTerminalProps> = ({
             onClick={() => setActiveTab("TRADES")}
             className={`font-bold pb-1 transition-colors flex items-center gap-1.5 ${
               activeTab === "TRADES"
-                ? "text-slate-900 border-b-2 border-slate-900"
+                ? "text-[#EA3815] border-b-2 border-[#EA3815]"
                 : "text-slate-400 hover:text-slate-600"
             }`}
           >
             <span>Recent trades</span>
-            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-100 text-slate-700">
+            <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded ${
+              activeTab === "TRADES"
+                ? "bg-[#FFF2EF] text-[#EA3815] font-semibold"
+                : "bg-slate-100 text-slate-700"
+            }`}>
               {recentTrades.length}
             </span>
           </button>
         </div>
 
-        <div className="flex items-center gap-1 text-slate-400">
-          <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+        <div className="flex items-center gap-1">
+          <span className="text-[10px] font-mono text-[#EA3815] bg-[#FFF2EF] px-1.5 py-0.5 rounded border border-[#FDCAC0] font-semibold">
             On-Chain
           </span>
         </div>
@@ -202,7 +210,7 @@ const OrderBookTerminalComponent: React.FC<OrderBookTerminalProps> = ({
           </div>
 
           {/* Dynamic Mid-Price Divider Bar */}
-          <div className="my-1.5 py-1.5 px-2 bg-slate-50 border-y border-slate-100 rounded flex items-center justify-between">
+          <div className="my-1.5 py-1.5 px-2 bg-[#FAF6F0] border-y border-[#F0E4D7] rounded flex items-center justify-between">
             <div className="flex items-center gap-1.5">
               <span className="text-sm font-bold text-slate-800 font-mono">
                 {midPrice !== null ? `₹${midPrice.toFixed(2)}` : "--"}

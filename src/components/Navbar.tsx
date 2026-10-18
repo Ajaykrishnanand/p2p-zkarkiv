@@ -104,22 +104,22 @@ export const Navbar: React.FC<NavbarProps> = ({
   return (
     <div className="w-full bg-white border-b border-slate-200">
       {/* Top Security & Zero-PII ticker alert */}
-      <div className="bg-emerald-50 border-b border-emerald-100 px-4 py-1.5 text-xs text-emerald-800 flex items-center justify-between">
+      <div className="bg-[#FFF5F2] border-b border-[#FDD9D0] px-4 py-1.5 text-xs text-[#B82B0B] flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="flex h-2 w-2 relative">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#EA3815] opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-[#EA3815]" />
           </span>
-          <span className="font-bold">ZERO REAL PII ON ARKIV:</span>
-          <span className="hidden sm:inline text-emerald-700">
+          <span className="font-extrabold text-[#9A2207]">ZERO REAL PII ON ARKIV:</span>
+          <span className="hidden sm:inline text-[#C03515]">
             Strictly synthetic aliases (<code className="font-mono font-semibold">*.synth@upi</code>) and client-side zkTLS bank session proofs.
           </span>
         </div>
 
-        <div className="flex items-center gap-3 text-[11px] text-emerald-700 font-mono">
-          <div className="hidden sm:flex items-center gap-1.5 bg-emerald-100/80 px-2 py-0.5 rounded border border-emerald-300">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="font-bold text-emerald-950">
+        <div className="flex items-center gap-3 text-[11px] text-[#B82B0B] font-mono">
+          <div className="hidden sm:flex items-center gap-1.5 bg-[#FDE8E2] px-2 py-0.5 rounded border border-[#FACDC2]">
+            <span className="w-2 h-2 rounded-full bg-[#EA3815] animate-pulse" />
+            <span className="font-bold text-[#8C1E07]">
               Arkiv WSS: {wsBlock ? `Block #${wsBlock}` : "Live Streaming"}
             </span>
           </div>
@@ -128,7 +128,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             href={ARKIV_EXPLORER_URL}
             target="_blank"
             rel="noreferrer"
-            className="hover:underline flex items-center gap-1 font-semibold"
+            className="hover:underline flex items-center gap-1 font-semibold text-[#EA3815]"
           >
             Tiramisu Explorer
             <ExternalLink className="w-3 h-3" />
@@ -141,9 +141,14 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* Left: Brand & Search input */}
         <div className="flex items-center gap-3 min-w-0">
           <div className="flex items-center gap-2 pr-2 border-r border-slate-100">
+            <img
+              src="/logo.png"
+              alt="Phantom UPI"
+              className="w-7 h-7 object-cover rounded-md border border-[#FDCAC0] shadow-2xs"
+            />
             <span className="font-extrabold text-slate-900 tracking-tight text-sm flex items-center gap-1">
-              <span className="text-slate-900 font-black">Phantom</span>
-              <span className="px-1.5 py-0.5 rounded-md bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-[10px] font-bold tracking-wider uppercase font-mono shadow-2xs">UPI</span>
+              <span className="text-slate-900 font-black">PHANTOM</span>
+              <span className="px-1.5 py-0.5 rounded-md bg-[#EA3815] text-white text-[10px] font-bold tracking-wider uppercase font-mono shadow-2xs">UPI</span>
             </span>
           </div>
 
@@ -152,14 +157,14 @@ export const Navbar: React.FC<NavbarProps> = ({
             <input
               type="text"
               placeholder="Search pair or alias..."
-              className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:border-slate-400"
+              className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#EA3815]"
             />
           </div>
 
           {/* Market Pair Badge */}
           <div className="flex items-center gap-2 border-l border-slate-100 pl-3 shrink-0">
             <button className="flex items-center gap-2 text-left hover:bg-slate-50 px-2 py-1 rounded-xl transition-colors">
-              <div className="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs shadow-sm">
+              <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-[#EA3815] to-[#FF5E3A] text-white flex items-center justify-center font-bold text-xs shadow-sm">
                 $
               </div>
               <div>
@@ -270,10 +275,10 @@ export const Navbar: React.FC<NavbarProps> = ({
           {onOpenEscrowModal && (
             <button
               onClick={onOpenEscrowModal}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs border border-blue-200 transition-all shadow-2xs cursor-pointer active:scale-95"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#FFF2EF] hover:bg-[#FEE6E1] text-[#EA3815] font-bold text-xs border border-[#FDCAC0] transition-all shadow-2xs cursor-pointer active:scale-95"
               title="Deposit USDC to Base Sepolia Escrow Contract"
             >
-              <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
+              <span className="w-2 h-2 rounded-full bg-[#EA3815] animate-pulse" />
               <span className="hidden sm:inline">Base Escrow</span>
               <span className="sm:hidden">Escrow</span>
             </button>
@@ -283,10 +288,10 @@ export const Navbar: React.FC<NavbarProps> = ({
           {onOpenUpiSimulator && (
             <button
               onClick={onOpenUpiSimulator}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs border border-indigo-200 transition-all shadow-2xs cursor-pointer active:scale-95"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs border border-slate-900 transition-all shadow-xs cursor-pointer active:scale-95"
               title="Open Interactive UPI Mobile Simulator with zkTLS Prover"
             >
-              <Smartphone className="w-3.5 h-3.5 text-indigo-600" />
+              <Smartphone className="w-3.5 h-3.5 text-[#FF5E3A]" />
               <span className="hidden sm:inline">UPI Simulator (zkTLS)</span>
               <span className="sm:hidden">Simulator</span>
             </button>
@@ -297,12 +302,12 @@ export const Navbar: React.FC<NavbarProps> = ({
             href="https://github.com/Ajaykrishnanand/p2p-zkarkiv/blob/main/HOW_TO_USE.md"
             target="_blank"
             rel="noreferrer"
-            className="hidden xl:flex px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs items-center gap-1.5 border border-emerald-200 transition-all shadow-2xs"
+            className="hidden xl:flex px-3 py-1.5 rounded-xl bg-[#FAF5EE] hover:bg-[#F3DFC9] text-slate-800 font-bold text-xs items-center gap-1.5 border border-[#EBD6C1] transition-all shadow-2xs"
             title="Read the Public How to Use Guide"
           >
-            <BookOpen className="w-3.5 h-3.5 text-emerald-600" />
+            <BookOpen className="w-3.5 h-3.5 text-[#EA3815]" />
             <span>How to Use</span>
-            <ExternalLink className="w-3 h-3 text-emerald-500" />
+            <ExternalLink className="w-3 h-3 text-slate-400" />
           </a>
 
           {/* Faucet Link Pill */}

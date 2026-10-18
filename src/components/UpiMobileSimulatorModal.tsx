@@ -292,7 +292,7 @@ export const UpiMobileSimulatorModal: React.FC<UpiMobileSimulatorModalProps> = (
                       <div className="space-y-3">
                         {/* Payee Avatar Card */}
                         <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 text-center space-y-1">
-                          <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-500 to-emerald-400 text-white font-bold text-lg flex items-center justify-center mx-auto shadow-sm">
+                          <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-[#EA3815] to-[#FF5E3A] text-white font-bold text-lg flex items-center justify-center mx-auto shadow-sm shadow-[#EA3815]/30">
                             {payeeAlias.slice(0, 1).toUpperCase()}
                           </div>
                           <div className="flex items-center justify-center gap-1">
@@ -300,7 +300,7 @@ export const UpiMobileSimulatorModal: React.FC<UpiMobileSimulatorModalProps> = (
                             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                           </div>
                           <p className="text-[10px] text-slate-400 font-mono">
-                            Verified Arkiv P2P Order Maker
+                            Verified Phantom UPI Order Maker
                           </p>
                         </div>
 

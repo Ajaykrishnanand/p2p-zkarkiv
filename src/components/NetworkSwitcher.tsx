@@ -142,8 +142,8 @@ export const NetworkSwitcher: React.FC<NetworkSwitcherProps> = ({ onNetworkChang
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 rounded-2xl bg-white border border-slate-200 shadow-xl z-50 p-2 animate-fadeIn text-xs">
-          <div className="px-3 py-2 border-b border-slate-100 flex items-center justify-between">
+        <div className="absolute right-0 mt-2 w-80 rounded-2xl bg-white border border-[#F0E4D7] shadow-xl z-50 p-2 animate-fadeIn text-xs">
+          <div className="px-3 py-2 border-b border-[#F5ECE2] flex items-center justify-between">
             <span className="font-bold text-slate-700 uppercase tracking-wider text-[10px]">
               Select Active Network
             </span>

@@ -225,7 +225,7 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
           <div className="flex items-center justify-between pb-2 border-b border-slate-100">
             <div className="flex items-center gap-2">
               <span className="font-bold text-slate-800 text-sm">Trade</span>
-              <span className="text-[10px] font-mono text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+              <span className="text-[10px] font-mono text-[#EA3815] bg-[#FEF2EF] px-2 py-0.5 rounded border border-[#FDCAC0] font-bold">
                 createEntity
               </span>
             </div>
@@ -241,7 +241,7 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
               }}
               className={`py-2 rounded-lg font-bold text-xs transition-all ${
                 tradeSide === "BUY"
-                  ? "bg-white text-emerald-600 shadow-sm border border-emerald-200"
+                  ? "bg-gradient-to-r from-[#EA3815] to-[#FF5E3A] text-white shadow-xs"
                   : "text-slate-500 hover:text-slate-800"
               }`}
             >
@@ -255,7 +255,7 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
               }}
               className={`py-2 rounded-lg font-bold text-xs transition-all ${
                 tradeSide === "SELL"
-                  ? "bg-white text-rose-600 shadow-sm border border-rose-200"
+                  ? "bg-gradient-to-r from-[#C2280A] to-[#EA3815] text-white shadow-xs"
                   : "text-slate-500 hover:text-slate-800"
               }`}
             >
@@ -518,7 +518,7 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
               step="25"
               value={percentSlider}
               onChange={(e) => handleSliderChange(Number(e.target.value))}
-              className="w-full accent-slate-900 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer"
+              className="w-full accent-[#EA3815] h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer"
             />
             <div className="flex justify-between text-[10px] font-mono text-slate-400 mt-1">
               {[0, 25, 50, 75, 100].map((p) => (
@@ -526,7 +526,7 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
                   type="button"
                   key={p}
                   onClick={() => handleSliderChange(p)}
-                  className={`hover:text-slate-800 ${percentSlider === p ? "text-slate-900 font-bold" : ""}`}
+                  className={`hover:text-slate-800 ${percentSlider === p ? "text-[#EA3815] font-bold" : ""}`}
                 >
                   {p}%
                 </button>
@@ -541,7 +541,7 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
               <button
                 type="button"
                 onClick={() => setSyntheticAlias(generateSyntheticUpi("merchant", "okhdfc"))}
-                className="text-emerald-600 hover:underline flex items-center gap-0.5 text-[10px]"
+                className="text-[#EA3815] hover:underline flex items-center gap-0.5 text-[10px] font-semibold"
               >
                 <Sparkles className="w-2.5 h-2.5" />
                 Randomize
@@ -553,7 +553,7 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
               onChange={(e) => setSyntheticAlias(e.target.value)}
               placeholder="e.g. trader.synth@okhdfc"
               className={`w-full bg-slate-50 border rounded-lg px-3 py-1.5 text-xs font-mono text-slate-800 focus:outline-none ${
-                syntheticAlias.length === 0 || isAliasValid ? "border-slate-200 focus:border-emerald-500" : "border-rose-400"
+                syntheticAlias.length === 0 || isAliasValid ? "border-slate-200 focus:border-[#EA3815]" : "border-rose-400"
               }`}
               required
             />
@@ -580,7 +580,7 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
                   onClick={() => setTtlMinutes(m)}
                   className={`py-1 rounded font-mono text-[10px] border transition-colors ${
                     ttlMinutes === m
-                      ? "bg-slate-900 text-white border-slate-900 font-bold"
+                      ? "bg-[#EA3815] text-white border-[#EA3815] font-bold shadow-xs"
                       : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
                   }`}
                 >
@@ -661,8 +661,8 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
               disabled={isSubmitting || !isAliasValid || (isSell && (isSellBlockedNoEscrow || isSellBlockedExceedsEscrow))}
               className={`w-full py-3 rounded-xl font-bold text-sm text-white shadow-md transition-all flex items-center justify-center gap-2 ${
                 tradeSide === "BUY"
-                  ? "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20"
-                  : "bg-rose-600 hover:bg-rose-700 shadow-rose-600/20"
+                  ? "bg-gradient-to-r from-[#EA3815] to-[#FF5E3A] hover:brightness-105 shadow-[#EA3815]/25"
+                  : "bg-gradient-to-r from-[#C2280A] to-[#EA3815] hover:brightness-105 shadow-[#EA3815]/25"
               } disabled:opacity-50`}
             >
               {isSubmitting ? (

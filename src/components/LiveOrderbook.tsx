@@ -74,12 +74,12 @@ const LiveOrderbookComponent: React.FC<LiveOrderbookProps> = ({
             onClick={() => setActiveTab("ACTIVE")}
             className={`font-bold pb-2 transition-colors flex items-center gap-2 ${
               activeTab === "ACTIVE"
-                ? "text-slate-900 border-b-2 border-slate-900"
+                ? "text-[#EA3815] border-b-2 border-[#EA3815]"
                 : "text-slate-400 hover:text-slate-600"
             }`}
           >
             <span>Active Orders</span>
-            <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
+            <span className={`text-[11px] font-mono px-2 py-0.5 rounded-full ${activeTab === "ACTIVE" ? "bg-[#FFF2EF] text-[#EA3815] font-bold" : "bg-slate-100 text-slate-700"}`}>
               {orders.filter((o) => getOrderStatus(o) !== "SETTLED").length}
             </span>
           </button>
@@ -88,12 +88,12 @@ const LiveOrderbookComponent: React.FC<LiveOrderbookProps> = ({
             onClick={() => setActiveTab("HISTORY")}
             className={`font-bold pb-2 transition-colors flex items-center gap-2 ${
               activeTab === "HISTORY"
-                ? "text-slate-900 border-b-2 border-slate-900"
+                ? "text-[#EA3815] border-b-2 border-[#EA3815]"
                 : "text-slate-400 hover:text-slate-600"
             }`}
           >
             <span>Order History</span>
-            <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
+            <span className={`text-[11px] font-mono px-2 py-0.5 rounded-full ${activeTab === "HISTORY" ? "bg-[#FFF2EF] text-[#EA3815] font-bold" : "bg-slate-100 text-slate-700"}`}>
               {orders.filter((o) => getOrderStatus(o) === "SETTLED").length}
             </span>
           </button>
@@ -102,12 +102,12 @@ const LiveOrderbookComponent: React.FC<LiveOrderbookProps> = ({
             onClick={() => setActiveTab("TRADES")}
             className={`font-bold pb-2 transition-colors flex items-center gap-2 ${
               activeTab === "TRADES"
-                ? "text-slate-900 border-b-2 border-slate-900"
+                ? "text-[#EA3815] border-b-2 border-[#EA3815]"
                 : "text-slate-400 hover:text-slate-600"
             }`}
           >
             <span>Trade History</span>
-            <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
+            <span className={`text-[11px] font-mono px-2 py-0.5 rounded-full ${activeTab === "TRADES" ? "bg-[#FFF2EF] text-[#EA3815] font-bold" : "bg-slate-100 text-slate-700"}`}>
               {orders.filter((o) => getOrderStatus(o) === "SETTLED").length}
             </span>
           </button>
@@ -130,7 +130,7 @@ const LiveOrderbookComponent: React.FC<LiveOrderbookProps> = ({
             className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
             title="Refresh Arkiv Queries"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin text-emerald-600" : ""}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin text-[#EA3815]" : ""}`} />
             <span>Refresh</span>
           </button>
         </div>
@@ -261,7 +261,7 @@ const LiveOrderbookComponent: React.FC<LiveOrderbookProps> = ({
                         {isOpen && (
                           <button
                             onClick={() => onSelectOrderToLock(order)}
-                            className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] flex items-center gap-1 shadow-xs transition-all"
+                            className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-[#EA3815] to-[#FF5E3A] hover:brightness-105 text-white font-bold text-[11px] flex items-center gap-1 shadow-xs transition-all"
                           >
                             <span>Lock & Pay</span>
                             <ArrowRight className="w-3 h-3" />

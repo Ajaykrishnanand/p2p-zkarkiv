@@ -170,7 +170,7 @@ export const ZkSettlementModal: React.FC<ZkSettlementModalProps> = ({
               <span className="text-base font-bold text-slate-900">
                 P2P UPI Payment & zkTLS Settlement
               </span>
-              <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono font-bold">
+              <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-[#FFF2EF] text-[#EA3815] border border-[#FDCAC0] font-mono font-bold">
                 Arkiv DB-Chain + Base Escrow
               </span>
             </div>
@@ -581,7 +581,7 @@ export const ZkSettlementModal: React.FC<ZkSettlementModalProps> = ({
             <button
               onClick={handleSettleOnArkiv}
               disabled={isProcessing}
-              className="w-full py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all"
+              className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-[#EA3815] to-[#FF5E3A] hover:opacity-95 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-[#EA3815]/25 transition-all cursor-pointer"
             >
               {isProcessing ? "Settling on Arkiv DB-Chain..." : "Settle on Arkiv DB-Chain & Release USDC"}
               <ArrowRight className="w-4 h-4" />
