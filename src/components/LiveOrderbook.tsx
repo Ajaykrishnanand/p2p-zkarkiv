@@ -12,6 +12,8 @@ import {
   RefreshCw,
   Code2,
   AlertCircle,
+  Building2,
+  Sparkles,
 } from "lucide-react";
 import { P2POrderEntity } from "@/lib/arkivOrderbook";
 
@@ -40,6 +42,11 @@ export const LiveOrderbook: React.FC<LiveOrderbookProps> = ({
     if (rateNum > maxRateFilter) return false;
     return true;
   });
+
+  const getBankBadge = (alias: string) => {
+    const handle = (alias || "").split("@")[1] || "upi";
+    return handle.toUpperCase();
+  };
 
   return (
     <div className="space-y-4">
@@ -110,6 +117,7 @@ export const LiveOrderbook: React.FC<LiveOrderbookProps> = ({
             const isSettled = status === "SETTLED";
             const isLocked = status === "LOCKED";
             const isOpen = status === "OPEN";
+            const bankHandle = getBankBadge(order.data?.syntheticUpiAlias);
 
             return (
               <div
@@ -161,7 +169,10 @@ export const LiveOrderbook: React.FC<LiveOrderbookProps> = ({
                   {/* Synthetic Alias & TTL */}
                   <div className="space-y-1.5 border-t border-zinc-800/80 pt-3 text-xs">
                     <div className="flex items-center justify-between">
-                      <span className="text-zinc-500">Payee Alias:</span>
+                      <span className="text-zinc-500 flex items-center gap-1">
+                        <Building2 className="w-3 h-3 text-zinc-500" />
+                        Routing ({bankHandle}):
+                      </span>
                       <span className="font-mono text-zinc-300 text-[11px] bg-zinc-950 px-2 py-0.5 rounded border border-zinc-800">
                         {order.data?.syntheticUpiAlias || "demo.synth@okhdfc"}
                       </span>
