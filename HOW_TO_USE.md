@@ -1,7 +1,7 @@
 # PhantomUPI — Public User & Developer Guide
 ### How to Use the Censorship-Resistant, Zero-Knowledge P2P UPI Orderbook
 
-> **Live Application:** [p2p-zkarkiv.vercel.app](http://localhost:3005)  
+> **Live Application:** [https://p2p-zkarkiv.vercel.app](https://p2p-zkarkiv.vercel.app)  
 > **Target Networks:** Arkiv Tiramisu Testnet (`7738577`) & Base Sepolia Testnet (`84532`)  
 > **Security Guarantee:** 100% Synthetic Zero-PII • No Real Bank Statement Leaks • Cryptographic zkTLS Settlement
 

@@ -17,7 +17,7 @@
 | **One-Line Pitch** | The first decentralized P2P crypto orderbook where Arkiv DB-Chain manages ephemeral 30-min escrow locks and client-side zkTLS proves Indian UPI bank payments without leaking bank statements or risking cybercrime liens. |
 | **Target Tracks** | 🏆 **Best Indian Use Case** ($2,000 USDC + Devcon 8 Ticket)<br>🛡️ **Censorship Resistance** ($750 USDC + Devcon 8 Ticket)<br>🔒 **Privacy** ($750 USDC + Devcon 8 Ticket) |
 | **Core Flow** | **Maker posts Sell Order** $\rightarrow$ **Funds locked in 30-min Escrow** $\rightarrow$ **Buyer pays via UPI Simulator** $\rightarrow$ **zkTLS proves payment authentic from bank** $\rightarrow$ **Escrow automatically releases USDC**. |
-| **Live Web App** | [http://localhost:3005](http://localhost:3005) |
+| **Live Web App** | [https://p2p-zkarkiv.vercel.app](https://p2p-zkarkiv.vercel.app) |
 | **GitHub Repository** | [github.com/Ajaykrishnanand/p2p-zkarkiv](https://github.com/Ajaykrishnanand/p2p-zkarkiv) |
 | **Orderbook DB-Chain** | **Arkiv Tiramisu Testnet** (Chain ID: `7738577`) |
 | **Collateral Escrow** | **Base Sepolia Testnet** (Chain ID: `84532`) |
@@ -406,7 +406,7 @@ contract P2PBaseSepoliaEscrow {
 # PART 2: LIVE WEBSITE DEMO SCRIPT & WALKTHROUGH
 
 *Recommended Duration: 4 to 5 Minutes*  
-*URL:* [http://localhost:3005](http://localhost:3005)
+*Live Application URL:* [https://p2p-zkarkiv.vercel.app](https://p2p-zkarkiv.vercel.app)
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
@@ -444,13 +444,13 @@ Before starting the live demonstration, ensure your MetaMask wallet has testnet 
 ## Phase 1: The Maker (Seller) Journey — Deposit Escrow & Post Order
 
 ### Action 1.1: Connect Wallet & Inspect Network Switcher
-1. Open [http://localhost:3005](http://localhost:3005).
+1. Open [https://p2p-zkarkiv.vercel.app](https://p2p-zkarkiv.vercel.app) (or `http://localhost:3005`).
 2. Click **"Connect Wallet"** in the top navigation bar. Select your MetaMask account.
 3. Point out the **Live Network Status Indicator** in the top right:
    - Green pulse: `Arkiv Tiramisu Connected` (showing live block number `#7509xx`).
 
 > **Presenter Script:**  
-> *"Here is the live PhantomUPI application running on localhost. In the header, you can see real-time WebSocket connectivity directly to Arkiv Tiramisu DB-Chain with live block streaming."*
+> *"Here is the live PhantomUPI application running at p2p-zkarkiv.vercel.app. In the header, you can see real-time WebSocket connectivity directly to Arkiv Tiramisu DB-Chain with live block streaming."*
 
 ---
 
