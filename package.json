@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "seed": "tsx scripts/seedTiramisu.ts"
+    "seed": "tsx scripts/seedTiramisu.ts",
+    "compile:contracts": "solc --bin --abi contracts/BaseSepoliaEscrow.sol -o contracts/build --overwrite",
+    "deploy:base": "tsx scripts/deployBaseSepolia.ts"
   },
   "dependencies": {
     "@arkiv-network/sdk": "^0.8.0",

@@ -27,6 +27,7 @@ import {
 } from "@/lib/zkTlsProver";
 import { generateSyntheticUtr } from "@/lib/syntheticGuard";
 import { ARKIV_EXPLORER_URL } from "@/lib/arkivClient";
+import { BASE_SEPOLIA_ESCROW_ADDRESS, getBaseScanAddressUrl } from "@/lib/baseEscrowClient";
 
 interface ZkSettlementModalProps {
   isOpen: boolean;
@@ -626,6 +627,18 @@ export const ZkSettlementModal: React.FC<ZkSettlementModalProps> = ({
               <div className="flex justify-between">
                 <span className="text-slate-500">Fiat Verified:</span>
                 <span className="font-bold text-slate-900">₹{amountInr.toLocaleString("en-IN")} INR</span>
+              </div>
+              <div className="flex justify-between pt-1 border-t border-slate-200/60">
+                <span className="text-slate-500">Base Sepolia Escrow:</span>
+                <a
+                  href={getBaseScanAddressUrl(BASE_SEPOLIA_ESCROW_ADDRESS)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-blue-600 font-bold hover:underline flex items-center gap-1"
+                >
+                  {BASE_SEPOLIA_ESCROW_ADDRESS.slice(0, 10)}... (BaseScan)
+                  <ExternalLink className="w-3 h-3" />
+                </a>
               </div>
             </div>
 

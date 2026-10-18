@@ -201,6 +201,18 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           </div>
 
+          {/* Base Sepolia Escrow Link */}
+          <a
+            href="https://sepolia.basescan.org"
+            target="_blank"
+            rel="noreferrer"
+            className="hidden xl:flex px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs items-center gap-1.5 border border-slate-200 transition-all"
+          >
+            <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+            <span>Base Sepolia Escrow</span>
+            <ExternalLink className="w-3 h-3 text-slate-400" />
+          </a>
+
           {/* Faucet Link Pill */}
           <a
             href="https://hub.arkiv.network/faucet"
