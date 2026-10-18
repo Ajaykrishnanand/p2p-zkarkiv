@@ -76,13 +76,16 @@ export const LiveOrderbook: React.FC<LiveOrderbookProps> = ({
 
           <button
             onClick={() => setActiveTab("TRADES")}
-            className={`font-bold pb-2 transition-colors ${
+            className={`font-bold pb-2 transition-colors flex items-center gap-2 ${
               activeTab === "TRADES"
                 ? "text-slate-900 border-b-2 border-slate-900"
                 : "text-slate-400 hover:text-slate-600"
             }`}
           >
-            Trade History
+            <span>Trade History</span>
+            <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
+              {orders.filter((o) => o.attributes?.status === "SETTLED").length}
+            </span>
           </button>
         </div>
 
@@ -100,7 +103,7 @@ export const LiveOrderbook: React.FC<LiveOrderbookProps> = ({
           <button
             onClick={onRefresh}
             disabled={isLoading}
-            className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-900 transition-colors"
+            className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
             title="Refresh Arkiv Queries"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin text-emerald-600" : ""}`} />
@@ -111,11 +114,19 @@ export const LiveOrderbook: React.FC<LiveOrderbookProps> = ({
 
       {/* Orders Table */}
       {filteredOrders.length === 0 ? (
-        <div className="text-center py-12 text-slate-400">
-          <AlertCircle className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-          <p className="font-semibold text-slate-600 text-sm">No orders in this view</p>
-          <p className="text-xs text-slate-400 mt-0.5">
-            Post an order via the Trade panel on the right to create on-chain testnet entities.
+        <div className="text-center py-16 text-slate-400">
+          <div className="w-12 h-12 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center mx-auto mb-3">
+            <AlertCircle className="w-6 h-6 text-slate-400" />
+          </div>
+          <p className="font-semibold text-slate-700 text-sm">
+            {activeTab === "ACTIVE"
+              ? "No active orders on Arkiv DB-Chain"
+              : activeTab === "HISTORY"
+              ? "No settled order history yet"
+              : "No executed trades yet"}
+          </p>
+          <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto">
+            Place an order using the Trade panel on the right to post on-chain limit orders or inspect live state.
           </p>
         </div>
       ) : (
@@ -123,6 +134,7 @@ export const LiveOrderbook: React.FC<LiveOrderbookProps> = ({
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-slate-100 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                <th className="py-3 px-3">Time</th>
                 <th className="py-3 px-3">Pair</th>
                 <th className="py-3 px-3">Order Type</th>
                 <th className="py-3 px-3">Direction</th>
@@ -146,6 +158,11 @@ export const LiveOrderbook: React.FC<LiveOrderbookProps> = ({
 
                 return (
                   <tr key={order.key} className="hover:bg-slate-50/70 transition-colors">
+                    {/* Time */}
+                    <td className="py-3 px-3 text-slate-400 font-mono text-[10px]">
+                      {order.data?.createdAt ? new Date(order.data.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "Just now"}
+                    </td>
+
                     {/* Pair */}
                     <td className="py-3 px-3">
                       <div className="flex items-center gap-2">

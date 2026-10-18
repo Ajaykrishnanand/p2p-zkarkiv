@@ -132,20 +132,20 @@ export const Navbar: React.FC<NavbarProps> = ({
       </div>
 
       {/* Main Pro-Exchange Ticker Header */}
-      <div className="px-4 py-3 flex flex-wrap items-center justify-between gap-4">
+      <div className="px-4 py-2.5 flex items-center justify-between gap-3 w-full">
         {/* Left: Search input */}
-        <div className="flex items-center gap-4">
-          <div className="relative w-64 hidden md:block">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="relative w-44 xl:w-56 hidden lg:block shrink-0">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
             <input
               type="text"
-              placeholder="Search pair or synthetic alias..."
+              placeholder="Search pair or alias..."
               className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:border-slate-400"
             />
           </div>
 
           {/* Market Pair Badge */}
-          <div className="flex items-center gap-3 border-l border-slate-100 pl-4">
+          <div className="flex items-center gap-2 border-l border-slate-100 pl-3 shrink-0">
             <button className="flex items-center gap-2 text-left hover:bg-slate-50 px-2 py-1 rounded-xl transition-colors">
               <div className="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs shadow-sm">
                 $
@@ -161,46 +161,41 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
 
           {/* Live Price Ticker Display */}
-          <div className="flex items-baseline gap-2 pl-2">
-            <span className="text-2xl font-extrabold text-slate-900 font-mono tracking-tight">
+          <div className="flex items-baseline gap-2 pl-2 shrink-0">
+            <span className="text-xl font-extrabold text-slate-900 font-mono tracking-tight">
               {currentPrice !== null ? `₹${currentPrice.toFixed(2)}` : "₹--"}
             </span>
             {currentPrice !== null ? (
               <div className={`flex items-center text-xs font-bold gap-0.5 ${priceChangePct >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
                 <ArrowUpRight className={`w-3.5 h-3.5 ${priceChangePct < 0 ? "rotate-90 text-rose-600" : ""}`} />
                 <span>{priceChangePct >= 0 ? `+${priceChangePct.toFixed(2)}%` : `${priceChangePct.toFixed(2)}%`}</span>
-                <span className="text-[10px] text-slate-400 font-normal ml-0.5">24h change</span>
               </div>
             ) : (
-              <div className="flex items-center text-xs font-medium text-slate-400">
-                <span>0.00% 24h change</span>
+              <div className="flex items-center text-[11px] font-medium text-slate-400">
+                <span>0.00%</span>
               </div>
             )}
           </div>
 
-          {/* 24h Stats Columns */}
-          <div className="hidden lg:flex items-center gap-6 border-l border-slate-100 pl-4 text-xs font-mono">
+          {/* 24h Stats Columns (Shown on wider desktop displays) */}
+          <div className="hidden 2xl:flex items-center gap-4 border-l border-slate-100 pl-3 text-xs font-mono shrink-0">
             <div>
-              <div className="text-[10px] text-slate-400 uppercase font-sans">24h high</div>
+              <div className="text-[9px] text-slate-400 uppercase font-sans">24h high</div>
               <div className="font-bold text-slate-800">{high24h !== null ? `₹${high24h.toFixed(2)}` : "--"}</div>
             </div>
             <div>
-              <div className="text-[10px] text-slate-400 uppercase font-sans">24h low</div>
+              <div className="text-[9px] text-slate-400 uppercase font-sans">24h low</div>
               <div className="font-bold text-slate-800">{low24h !== null ? `₹${low24h.toFixed(2)}` : "--"}</div>
             </div>
             <div>
-              <div className="text-[10px] text-slate-400 uppercase font-sans">24h volume (USDC)</div>
+              <div className="text-[9px] text-slate-400 uppercase font-sans">24h volume</div>
               <div className="font-bold text-slate-800">{volumeUsdc > 0 ? volumeUsdc.toLocaleString(undefined, { maximumFractionDigits: 0 }) : "0"}</div>
-            </div>
-            <div>
-              <div className="text-[10px] text-slate-400 uppercase font-sans">24h turnover (INR)</div>
-              <div className="font-bold text-slate-800">{turnoverInr > 0 ? `₹${(turnoverInr / 100000).toFixed(1)} Lakh` : "₹0.0 Lakh"}</div>
             </div>
           </div>
         </div>
 
         {/* Right Action Items */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5 shrink-0">
           {/* Connect MetaMask / Connected Wallet Pill */}
           {!walletAddress ? (
             <button

@@ -109,8 +109,8 @@ export const OrderBookTerminal: React.FC<OrderBookTerminalProps> = ({
       : null;
 
     return {
-      asks: parsedAsks.slice(0, 5),
-      bids: parsedBids.slice(0, 5),
+      asks: parsedAsks.slice(0, 7),
+      bids: parsedBids.slice(0, 7),
       recentTrades: trades,
       midPrice: calculatedMid,
       spread: calculatedSpread,
@@ -119,7 +119,7 @@ export const OrderBookTerminal: React.FC<OrderBookTerminalProps> = ({
   }, [orders]);
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm flex flex-col justify-between h-[420px] text-xs">
+    <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm flex flex-col justify-between h-[560px] text-xs">
       {/* Header Tabs */}
       <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
         <div className="flex items-center gap-4">

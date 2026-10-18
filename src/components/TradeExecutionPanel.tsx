@@ -161,9 +161,9 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex flex-col justify-between text-xs min-h-[640px] h-auto">
+    <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-sm flex flex-col justify-between text-xs h-[560px] overflow-y-auto">
       <form onSubmit={handleSubmit} className="flex-1 flex flex-col justify-between">
-        <div className="space-y-3.5">
+        <div className="space-y-3">
           {/* Header Title */}
           <div className="flex items-center justify-between pb-2 border-b border-slate-100">
             <div className="flex items-center gap-2">
@@ -516,15 +516,15 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
               </div>
 
               {/* Exact Error Snippet */}
-              <div className="text-[11px] font-mono text-rose-800 bg-white/95 p-2.5 rounded-lg border border-rose-200 leading-relaxed break-words shadow-2xs">
-                <div className="font-bold text-rose-900 flex items-center justify-between text-[10px] pb-1 border-b border-rose-100 mb-1.5">
+              <div className="text-[10px] font-mono text-rose-800 bg-white/95 p-2 rounded-lg border border-rose-200 leading-relaxed break-words shadow-2xs">
+                <div className="font-bold text-rose-900 flex items-center justify-between text-[10px] pb-1 border-b border-rose-100 mb-1">
                   <span className="flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
                     Failure Diagnostic
                   </span>
-                  <span className="text-rose-600 font-semibold">{failedTx.code}</span>
+                  <span className="text-rose-600 font-semibold truncate max-w-[140px]">{failedTx.code}</span>
                 </div>
-                <div className="text-rose-800">
+                <div className="text-rose-800 max-h-20 overflow-y-auto pr-1">
                   {failedTx.reason}
                 </div>
               </div>

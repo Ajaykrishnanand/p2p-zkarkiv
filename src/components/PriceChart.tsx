@@ -99,7 +99,7 @@ export const PriceChart: React.FC<PriceChartProps> = ({ orders = [] }) => {
   const activeCandle = hoveredCandle || (candles.length > 0 ? candles[candles.length - 1] : null);
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex flex-col justify-between h-[450px]">
+    <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex flex-col justify-between h-[560px]">
       {/* Top Header Bar */}
       <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
         <div className="flex items-center gap-3">

@@ -281,21 +281,12 @@ export default function Home() {
         />
 
         {/* Inner Content Area */}
-        <div className="p-4 sm:p-5 space-y-4 max-w-[1700px] w-full mx-auto">
-          {/* Core Grid: Chart + Orders (Left) + OrderBook (Middle) + Trade Panel (Right) */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-            {/* Left Area: Price Chart (Graph) with Active Orders & Order History at bottom */}
-            <div className="lg:col-span-6 xl:col-span-6 space-y-4">
+        <div className="p-4 sm:p-5 space-y-4 max-w-[1780px] w-full mx-auto">
+          {/* Top Trading Grid: Chart (6 cols) + OrderBook (3 cols) + Trade Panel (3 cols) */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+            {/* Left Area: Price Chart (6 cols) */}
+            <div className="lg:col-span-6 xl:col-span-6">
               <PriceChart orders={orders} />
-
-              {/* Active Orders & History directly in bottom of graph */}
-              <LiveOrderbook
-                orders={orders}
-                isLoading={isLoading}
-                onRefresh={fetchOrders}
-                onSelectOrderToLock={(order) => setOrderToLock(order)}
-                onInspectEntity={(order) => setInspectedEntity(order)}
-              />
             </div>
 
             {/* Middle Area: Order Book Terminal (3 cols) */}
@@ -317,6 +308,17 @@ export default function Home() {
                 selectedPrice={selectedBookPrice}
               />
             </div>
+          </div>
+
+          {/* Full-Width Bottom Terminal: Active Orders, Order History & Trade History */}
+          <div className="w-full">
+            <LiveOrderbook
+              orders={orders}
+              isLoading={isLoading}
+              onRefresh={fetchOrders}
+              onSelectOrderToLock={(order) => setOrderToLock(order)}
+              onInspectEntity={(order) => setInspectedEntity(order)}
+            />
           </div>
 
           {/* Footer matching reference image */}
