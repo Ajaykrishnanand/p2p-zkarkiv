@@ -157,7 +157,7 @@ pnpm install
 ### 2. Configure Environment Variables
 Copy or create a `.env` file in the root directory:
 ```bash
-PRIVATE_KEY=0xb40475b66003a6f336ef8277cbd9456bcf6952d8d27cad4d197c26f1ef48038d
+PRIVATE_KEY=your_burner_or_deployer_private_key_here
 BASE_SEPOLIA_RPC=https://sepolia.base.org
 BASE_SEPOLIA_USDC=0x036CbD53842c5426634e7929541eC2318f3dCF7e
 NEXT_PUBLIC_BASE_SEPOLIA_CHAIN_ID=84532
