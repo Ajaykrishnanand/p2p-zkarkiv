@@ -36,6 +36,8 @@ interface TradeExecutionPanelProps {
   onConnectWallet?: () => void;
   onOpenEscrowModal?: () => void;
   depositedEscrowUsdc?: number;
+  onRefreshEscrow?: () => void;
+  isRefreshingEscrow?: boolean;
 }
 
 export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
@@ -46,6 +48,8 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
   onConnectWallet,
   onOpenEscrowModal,
   depositedEscrowUsdc = 0,
+  onRefreshEscrow,
+  isRefreshingEscrow = false,
 }) => {
   const [tradeSide, setTradeSide] = useState<"BUY" | "SELL">("BUY");
   const [orderType, setOrderType] = useState<"LIMIT" | "MARKET">("LIMIT");
@@ -248,9 +252,22 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
                     <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block leading-none">
                       Deposited Escrow Collateral
                     </span>
-                    <span className="text-sm font-extrabold text-blue-950 font-mono">
-                      {escrowAvailable.toFixed(2)} USDC
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm font-extrabold text-blue-950 font-mono">
+                        {escrowAvailable.toFixed(2)} USDC
+                      </span>
+                      {onRefreshEscrow && (
+                        <button
+                          type="button"
+                          onClick={onRefreshEscrow}
+                          disabled={isRefreshingEscrow}
+                          className="text-slate-400 hover:text-blue-600 transition-colors p-0.5 cursor-pointer"
+                          title="Refresh on-chain escrow balance from Base Sepolia"
+                        >
+                          <RefreshCw className={`w-3 h-3 ${isRefreshingEscrow ? "animate-spin text-blue-600" : ""}`} />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -282,7 +299,23 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
               </div>
 
               {/* Status / Requirement Indicator */}
-              {isSellBlockedNoEscrow ? (
+              {!walletAddress ? (
+                <div className="p-2 rounded-xl bg-amber-100/70 border border-amber-200 text-amber-900 text-[11px] flex items-center justify-between gap-1.5 leading-tight">
+                  <span className="flex items-center gap-1.5">
+                    <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                    <span>Connect wallet to sync your on-chain escrow.</span>
+                  </span>
+                  {onConnectWallet && (
+                    <button
+                      type="button"
+                      onClick={onConnectWallet}
+                      className="px-2 py-0.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded text-[10px] shrink-0 cursor-pointer"
+                    >
+                      Connect
+                    </button>
+                  )}
+                </div>
+              ) : isSellBlockedNoEscrow ? (
                 <div className="p-2 rounded-xl bg-amber-100/70 border border-amber-200 text-amber-900 text-[11px] flex items-start gap-1.5 leading-tight">
                   <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
                   <span>

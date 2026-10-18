@@ -119,3 +119,47 @@ export function getBaseScanTxUrl(txHash: string): string {
 export function getBaseScanAddressUrl(address: string): string {
   return `${BASE_SEPOLIA_EXPLORER}/address/${address}`;
 }
+
+/**
+ * Queries real on-chain USDC deposited into the escrow contract by a maker address.
+ */
+export async function getMakerEscrowDepositsOnChain(makerAddress: string): Promise<number> {
+  if (!makerAddress) return 0;
+  try {
+    const { getAddress, parseAbiItem, formatUnits } = await import("viem");
+    const checkMaker = getAddress(makerAddress);
+    const transferAbi = parseAbiItem(
+      "event Transfer(address indexed from, address indexed to, uint256 value)"
+    );
+
+    const currentBlock = await baseSepoliaPublicClient.getBlockNumber();
+    let totalDeposited = 0n;
+
+    // Scan recent 1500 blocks in 190-block chunks (Base RPC max range is 200)
+    for (let b = currentBlock; b >= currentBlock - 1500n; b -= 190n) {
+      const fromBlock = b - 190n;
+      try {
+        const logs = await baseSepoliaPublicClient.getLogs({
+          address: BASE_SEPOLIA_USDC_ADDRESS,
+          event: transferAbi,
+          args: { from: checkMaker, to: BASE_SEPOLIA_ESCROW_ADDRESS },
+          fromBlock,
+          toBlock: b,
+        });
+        for (const log of logs) {
+          if (log.args.value) {
+            totalDeposited += log.args.value;
+          }
+        }
+      } catch (subErr) {
+        // Continue scanning other chunks if one fails
+        console.warn("Sub-block query warning:", subErr);
+      }
+    }
+
+    return Number(formatUnits(totalDeposited, 6));
+  } catch (err) {
+    console.warn("Failed to query on-chain escrow deposits:", err);
+    return 0;
+  }
+}

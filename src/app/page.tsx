@@ -34,6 +34,7 @@ import {
 } from "@/lib/arkivClient";
 import { ZkProofBundle } from "@/lib/zkTlsProver";
 import { useArkivWebSocket } from "@/lib/useArkivWebSocket";
+import { getMakerEscrowDepositsOnChain } from "@/lib/baseEscrowClient";
 
 export default function Home() {
   const [walletAccount, setWalletAccount] = useState<{
@@ -53,18 +54,48 @@ export default function Home() {
   const [isUpiSimulatorOpen, setIsUpiSimulatorOpen] = useState<boolean>(false);
   const [isEscrowModalOpen, setIsEscrowModalOpen] = useState<boolean>(false);
   const [depositedEscrowUsdc, setDepositedEscrowUsdc] = useState<number>(0);
+  const [isRefreshingEscrow, setIsRefreshingEscrow] = useState<boolean>(false);
 
-  // Sync deposited escrow balance from localStorage whenever wallet account changes
-  useEffect(() => {
-    if (typeof window !== "undefined" && walletAccount?.address) {
-      const saved = localStorage.getItem(`zkupi_escrow_deposit_${walletAccount.address.toLowerCase()}`);
+  // Sync deposited escrow balance from localStorage and on-chain Base Sepolia logs
+  const syncEscrowBalance = useCallback(async () => {
+    if (!walletAccount?.address) {
+      setDepositedEscrowUsdc(0);
+      return;
+    }
+    const addrKey = walletAccount.address.toLowerCase();
+    // 1. Instant recovery from local cache
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem(`zkupi_escrow_deposit_${addrKey}`);
       if (saved) {
         setDepositedEscrowUsdc(parseFloat(saved) || 0);
       }
-    } else if (!walletAccount?.address) {
-      setDepositedEscrowUsdc(0);
+    }
+
+    // 2. Query Base Sepolia on-chain Transfer logs to escrow contract
+    setIsRefreshingEscrow(true);
+    try {
+      const onChainAmount = await getMakerEscrowDepositsOnChain(walletAccount.address);
+      if (onChainAmount > 0) {
+        setDepositedEscrowUsdc((prev) => {
+          const finalVal = Math.max(prev, onChainAmount);
+          if (typeof window !== "undefined") {
+            localStorage.setItem(`zkupi_escrow_deposit_${addrKey}`, finalVal.toString());
+          }
+          return finalVal;
+        });
+      }
+    } catch (err) {
+      console.warn("On-chain escrow query error:", err);
+    } finally {
+      setIsRefreshingEscrow(false);
     }
   }, [walletAccount?.address]);
+
+  useEffect(() => {
+    syncEscrowBalance();
+    const interval = setInterval(syncEscrowBalance, 15000);
+    return () => clearInterval(interval);
+  }, [syncEscrowBalance]);
 
   // Handler for successful escrow deposits
   const handleEscrowDepositSuccess = (amountUsdc: number) => {
@@ -345,6 +376,8 @@ export default function Home() {
                 isSubmitting={isSubmitting}
                 selectedPrice={selectedBookPrice}
                 depositedEscrowUsdc={depositedEscrowUsdc}
+                onRefreshEscrow={syncEscrowBalance}
+                isRefreshingEscrow={isRefreshingEscrow}
               />
             </div>
           </div>
