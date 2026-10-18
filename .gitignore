@@ -32,8 +32,14 @@ tsconfig.tsbuildinfo
 .idea/
 .vscode/
 
-# Markdown exclusion policy (Only README.md and arkiv gate files allowed)
+# Markdown exclusion policy
 *.md
 !README.md
+!presentation.md
+!presentaiton.md
+!task.md
+!test.md
+!HOW_TO_USE.md
 !arkiv/schema.md
 !arkiv/friction.md
+

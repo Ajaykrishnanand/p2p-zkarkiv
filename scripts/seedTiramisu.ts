@@ -7,6 +7,7 @@
  * 3. SETTLED Order (Cryptographically settled with zkTLS Groth16 proof & Poseidon nullifier)
  */
 
+import "dotenv/config";
 import { generatePrivateKey } from "viem/accounts";
 import { getBurnerWalletClient } from "../src/lib/arkivClient";
 import {

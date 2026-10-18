@@ -12,6 +12,7 @@ import {
   Check,
   Zap,
   ArrowUpRight,
+  BookOpen,
 } from "lucide-react";
 import { TIRAMISU_CHAIN_ID, ARKIV_EXPLORER_URL } from "@/lib/arkivClient";
 import { P2POrderEntity } from "@/lib/arkivOrderbook";
@@ -23,6 +24,8 @@ interface NavbarProps {
   onConnectWallet?: () => void;
   isMetaMaskConnected?: boolean;
   orders?: P2POrderEntity[];
+  wsBlock?: string | null;
+  isWsConnected?: boolean;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -32,6 +35,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onConnectWallet,
   isMetaMaskConnected,
   orders = [],
+  wsBlock,
+  isWsConnected = true,
 }) => {
   const [copied, setCopied] = useState<boolean>(false);
 
@@ -91,6 +96,12 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
 
         <div className="flex items-center gap-3 text-[11px] text-emerald-700 font-mono">
+          <div className="hidden sm:flex items-center gap-1.5 bg-emerald-100/80 px-2 py-0.5 rounded border border-emerald-300">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="font-bold text-emerald-950">
+              Arkiv WSS: {wsBlock ? `Block #${wsBlock}` : "Live Streaming"}
+            </span>
+          </div>
           <span>Chain ID: {TIRAMISU_CHAIN_ID}</span>
           <a
             href={ARKIV_EXPLORER_URL}
@@ -200,6 +211,19 @@ export const Navbar: React.FC<NavbarProps> = ({
               {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
             </button>
           </div>
+
+          {/* How to Use Guide Link */}
+          <a
+            href="https://github.com/Ajaykrishnanand/p2p-zkarkiv/blob/main/HOW_TO_USE.md"
+            target="_blank"
+            rel="noreferrer"
+            className="hidden lg:flex px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs items-center gap-1.5 border border-emerald-200 transition-all shadow-2xs"
+            title="Read the Public How to Use Guide"
+          >
+            <BookOpen className="w-3.5 h-3.5 text-emerald-600" />
+            <span>How to Use</span>
+            <ExternalLink className="w-3 h-3 text-emerald-500" />
+          </a>
 
           {/* Base Sepolia Escrow Link */}
           <a

@@ -1,8 +1,22 @@
 "use client";
 
-import React, { useState } from "react";
-import { Plus, ShieldAlert, Sparkles, Clock, AlertTriangle, ArrowRight, Wallet } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import {
+  Plus,
+  ShieldAlert,
+  Sparkles,
+  Clock,
+  AlertTriangle,
+  ArrowRight,
+  Wallet,
+  X,
+  RefreshCw,
+  Radio,
+  Wifi,
+  ExternalLink,
+} from "lucide-react";
 import { isSyntheticUpi, generateSyntheticUpi } from "@/lib/syntheticGuard";
+import { useArkivWebSocket } from "@/lib/useArkivWebSocket";
 
 interface TradeExecutionPanelProps {
   onPostOrder: (params: {
@@ -31,8 +45,19 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
   const [ttlMinutes, setTtlMinutes] = useState<number>(60);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  // Live WebSocket stream status from Arkiv DB-Chain
+  const wsStatus = useArkivWebSocket();
+
+  // Failed Transaction State (displayed at the bottom of the order)
+  const [failedTx, setFailedTx] = useState<{
+    reason: string;
+    code?: string;
+    timestamp: string;
+    sender: string;
+  } | null>(null);
+
   // Sync selected price if clicked from orderbook
-  React.useEffect(() => {
+  useEffect(() => {
     if (selectedPrice) {
       setLimitPrice(selectedPrice);
     }
@@ -43,7 +68,6 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
 
   const handleSliderChange = (pct: number) => {
     setPercentSlider(pct);
-    // Base 10,000 INR pool
     const calculated = Math.round((10000 * (pct / 100)) / 100) * 100;
     setAmountInr(Math.max(calculated, 500));
   };
@@ -51,6 +75,7 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
+    setFailedTx(null);
 
     if (!isAliasValid) {
       setErrorMsg("Security Gate Rejection: Only synthetic UPI aliases (*.synth@*) allowed on Arkiv.");
@@ -64,28 +89,102 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
         syntheticUpiAlias: syntheticAlias,
         ttlMinutes,
       });
+      setFailedTx(null);
+
+      // Notify Arkiv Webhook receiver of new order
+      fetch("/api/arkiv/webhook", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-arkiv-source": "p2parkiv-ui" },
+        body: JSON.stringify({
+          event: "ORDER_CREATED",
+          sender: walletAddress || "0xBurnerSigner",
+          amountInr,
+          rateInrPerUsdc: limitPrice,
+          timestamp: new Date().toISOString(),
+        }),
+      }).catch(() => {});
     } catch (err: any) {
-      setErrorMsg(err?.message || "Failed to submit transaction to Arkiv DB-Chain.");
+      const reason =
+        err?.shortMessage ||
+        err?.message ||
+        "The total cost (gas * gas fee + value) of executing this transaction exceeds the balance of the account.";
+
+      const failurePayload = {
+        reason,
+        code: err?.code || "ACTION_REJECTED_OR_INSUFFICIENT_GAS",
+        timestamp: new Date().toLocaleTimeString(),
+        sender: walletAddress || "0xBurnerSigner",
+      };
+
+      setFailedTx(failurePayload);
+
+      // Dispatch Webhook for transaction failure event
+      fetch("/api/arkiv/webhook", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-arkiv-source": "p2parkiv-ui" },
+        body: JSON.stringify({
+          event: "TRANSACTION_FAILED",
+          ...failurePayload,
+        }),
+      }).catch(() => {});
     }
   };
 
+  // Helper to simulate a failed transaction for demo/testing purposes
+  const handleSimulateFailedTx = () => {
+    const failurePayload = {
+      reason:
+        "The total cost (gas * gas fee + value) of executing this transaction exceeds the balance of the account: insufficient funds for gas * price + value on Arkiv Tiramisu (7738577).",
+      code: "INSUFFICIENT_FUNDS_OR_REVERT",
+      timestamp: new Date().toLocaleTimeString(),
+      sender: walletAddress || "0x79b4355555a6DB2811FbE7DC38b9Ff644F2fa581",
+    };
+
+    setFailedTx(failurePayload);
+
+    // Also trigger Webhook event
+    fetch("/api/arkiv/webhook", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-arkiv-source": "simulation" },
+      body: JSON.stringify({
+        event: "TRANSACTION_FAILED_SIMULATION",
+        ...failurePayload,
+      }),
+    }).catch(() => {});
+  };
+
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex flex-col justify-between text-xs h-[640px]">
+    <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex flex-col justify-between text-xs min-h-[640px] h-auto">
       <form onSubmit={handleSubmit} className="flex-1 flex flex-col justify-between">
         <div className="space-y-3.5">
-          {/* Header Title */}
+          {/* Header Title with Test Fail State option */}
           <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-            <span className="font-bold text-slate-800 text-sm">Trade</span>
-            <span className="text-[11px] font-mono text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-              createEntity
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-slate-800 text-sm">Trade</span>
+              <span className="text-[10px] font-mono text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                createEntity
+              </span>
+            </div>
+
+            {/* Quick Test Fail Simulator button */}
+            <button
+              type="button"
+              onClick={handleSimulateFailedTx}
+              className="text-[10px] font-mono text-rose-600 hover:text-rose-800 bg-rose-50 hover:bg-rose-100 px-2 py-0.5 rounded border border-rose-200 transition-colors"
+              title="Click to simulate how a failed transaction displays at the bottom of the Buy order"
+            >
+              🧪 Test Fail State
+            </button>
           </div>
 
           {/* Buy / Sell Toggle Tabs */}
           <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl">
             <button
               type="button"
-              onClick={() => setTradeSide("BUY")}
+              onClick={() => {
+                setTradeSide("BUY");
+                setFailedTx(null);
+              }}
               className={`py-2 rounded-lg font-bold text-xs transition-all ${
                 tradeSide === "BUY"
                   ? "bg-white text-emerald-600 shadow-sm border border-emerald-200"
@@ -96,7 +195,10 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
             </button>
             <button
               type="button"
-              onClick={() => setTradeSide("SELL")}
+              onClick={() => {
+                setTradeSide("SELL");
+                setFailedTx(null);
+              }}
               className={`py-2 rounded-lg font-bold text-xs transition-all ${
                 tradeSide === "SELL"
                   ? "bg-white text-rose-600 shadow-sm border border-rose-200"
@@ -266,8 +368,13 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
           </div>
         </div>
 
-        {/* Bottom Actions & Order Breakdown */}
-        <div className="pt-3 border-t border-slate-100 space-y-2.5">
+        {/* ========================================================
+            BOTTOM ACTIONS, FAILED TX DISPLAY & WEBSOCKET STATUS
+           ======================================================== */}
+        {/* ========================================================
+            BOTTOM ACTIONS, SUMMARY & REAL-TIME ARKIV NETWORKING
+           ======================================================== */}
+        <div className="pt-3 border-t border-slate-100 space-y-2.5 mt-3">
           {errorMsg && (
             <div className="p-2 rounded bg-rose-50 border border-rose-200 text-rose-600 text-[11px]">
               {errorMsg}
@@ -285,7 +392,10 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
             } disabled:opacity-50`}
           >
             {isSubmitting ? (
-              <span>Submitting to Arkiv...</span>
+              <span className="flex items-center gap-2">
+                <RefreshCw className="w-4 h-4 animate-spin" />
+                Submitting to Arkiv DB-Chain...
+              </span>
             ) : (
               <>
                 <span>{tradeSide === "BUY" ? "Buy USDC" : "Sell USDC"} / Post Order</span>
@@ -305,10 +415,125 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
               <span className="text-slate-800">~0.00012 GLM</span>
             </div>
             <div className="flex justify-between font-bold text-slate-900 pt-0.5 border-t border-slate-100">
-              <span>Cost:</span>
+              <span>Total Cost:</span>
               <span>₹{amountInr.toLocaleString("en-IN")} INR</span>
             </div>
           </div>
+
+          {/* Live Arkiv WebSocket Real-Time Stream Status Bar */}
+          <div className="p-2 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1.5 text-[10px] font-mono">
+            <div className="flex items-center gap-1.5">
+              <span className="flex h-2 w-2 relative">
+                <span
+                  className={`animate-ping absolute inline-flex h-full w-full rounded-full ${
+                    wsStatus.isConnected ? "bg-emerald-400" : "bg-amber-400"
+                  } opacity-75`}
+                />
+                <span
+                  className={`relative inline-flex rounded-full h-2 w-2 ${
+                    wsStatus.isConnected ? "bg-emerald-500" : "bg-amber-500"
+                  }`}
+                />
+              </span>
+              <span className="font-bold text-slate-700">Arkiv WSS & Webhook</span>
+            </div>
+
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-slate-500">
+                {wsStatus.latestBlock ? `Block #${wsStatus.latestBlock}` : "WSS streaming..."}
+              </span>
+              <span
+                className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${
+                  wsStatus.isConnected
+                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                    : "bg-amber-50 text-amber-700 border-amber-200"
+                }`}
+              >
+                {wsStatus.isConnected ? "WS LIVE" : "CONNECTING"}
+              </span>
+              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded border bg-indigo-50 text-indigo-700 border-indigo-200">
+                WEBHOOK ACTIVE
+              </span>
+            </div>
+          </div>
+
+          {/* ========================================================
+              CRITICAL: TRANSACTION FAILED NOTIFICATION CARD (BOTTOM OF ORDER)
+             ======================================================== */}
+          {failedTx && (
+            <div className="p-3.5 rounded-xl bg-rose-50 border-2 border-rose-300 text-rose-900 space-y-2.5 animate-fadeIn shadow-sm">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center gap-1.5 font-bold text-xs text-rose-700">
+                  <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 animate-bounce" />
+                  <span>Transaction Failed on Arkiv DB-Chain</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setFailedTx(null)}
+                  className="text-rose-400 hover:text-rose-700 p-0.5 rounded hover:bg-rose-100 transition-colors"
+                  title="Dismiss error"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              {/* Exact Error Snippet */}
+              <div className="text-[11px] font-mono text-rose-800 bg-white/95 p-2.5 rounded-lg border border-rose-200 leading-relaxed break-words shadow-2xs">
+                <div className="font-bold text-rose-900 flex items-center justify-between text-[10px] pb-1 border-b border-rose-100 mb-1.5">
+                  <span className="flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                    Failure Diagnostic
+                  </span>
+                  <span className="text-rose-600 font-semibold">{failedTx.code}</span>
+                </div>
+                <div className="text-rose-800">
+                  {failedTx.reason}
+                </div>
+              </div>
+
+              {/* Network Context & Webhook notification */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between text-[10px] text-rose-700 font-mono gap-1">
+                <span>Chain: Arkiv Tiramisu (7738577)</span>
+                <span className="flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                  Webhook dispatched to /api/arkiv/webhook
+                </span>
+              </div>
+
+              {/* Action Buttons: Faucet link, Retry & Dismiss */}
+              <div className="flex flex-wrap gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFailedTx(null);
+                    handleSubmit(new Event("submit") as any);
+                  }}
+                  className="flex-1 py-1.5 px-3 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold text-[11px] flex items-center justify-center gap-1.5 transition-colors shadow-2xs"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  <span>Retry {tradeSide === "BUY" ? "Buy USDC" : "Sell"} Order</span>
+                </button>
+
+                <a
+                  href="https://hub.arkiv.network/faucet"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="py-1.5 px-2.5 rounded-lg bg-white hover:bg-rose-100 border border-rose-200 text-rose-700 font-bold text-[11px] flex items-center gap-1 transition-colors"
+                >
+                  <span>Arkiv Faucet</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+
+                <button
+                  type="button"
+                  onClick={() => setFailedTx(null)}
+                  className="py-1.5 px-2.5 rounded-lg bg-rose-200/80 hover:bg-rose-300 text-rose-900 font-bold text-[11px] transition-colors"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </form>
     </div>

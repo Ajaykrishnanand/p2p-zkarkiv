@@ -36,6 +36,7 @@ import {
 } from "@/lib/arkivClient";
 import { ZkProofBundle } from "@/lib/zkTlsProver";
 import { generateSyntheticUpi } from "@/lib/syntheticGuard";
+import { useArkivWebSocket } from "@/lib/useArkivWebSocket";
 
 export default function Home() {
   const [walletAccount, setWalletAccount] = useState<{
@@ -100,6 +101,13 @@ export default function Home() {
     }
   }, [judgeDemoOrder]);
 
+  // Real-time Arkiv WebSocket stream: auto-refreshes orderbook when new block is mined
+  const wsStatus = useArkivWebSocket(
+    useCallback(() => {
+      fetchOrders();
+    }, [fetchOrders])
+  );
+
   // Initial fetch and 8s reconciliation poll
   useEffect(() => {
     fetchOrders();
@@ -130,29 +138,9 @@ export default function Home() {
       });
       await fetchOrders();
     } catch (err: any) {
-      console.warn("Live order creation fell back to interactive state:", err);
-      const newEntity: P2POrderEntity = {
-        key: `0x8b${Math.floor(10000000 + Math.random() * 90000000).toString(16)}00000000000000000000000000000000000000000000000000` as `0x${string}`,
-        attributes: {
-          status: "OPEN",
-          amountInr: BigInt(Math.round(params.amountInr)),
-          rate: BigInt(Math.round(params.rateInrPerUsdc)),
-          fiatCurrency: "INR",
-          entityType: "p2p_order",
-          zkVerified: false,
-        },
-        data: {
-          orderId,
-          makerAddress: walletAccount.address,
-          usdcAmount: (params.amountInr / params.rateInrPerUsdc).toFixed(2),
-          syntheticUpiAlias: params.syntheticUpiAlias,
-          createdAt: new Date().toISOString(),
-          takerAddress: null,
-          zkProofSummary: null,
-          nullifierEntityKey: null,
-        },
-      };
-      setOrders((prev) => [newEntity, ...prev]);
+      console.warn("Live order creation failed on Arkiv DB-Chain:", err);
+      // Re-throw so TradeExecutionPanel displays the failed transaction card
+      throw err;
     } finally {
       setIsSubmitting(false);
     }
@@ -331,6 +319,8 @@ export default function Home() {
           onConnectWallet={handleConnectMetaMask}
           isMetaMaskConnected={isMetaMask}
           orders={orders}
+          wsBlock={wsStatus.latestBlock}
+          isWsConnected={wsStatus.isConnected}
         />
 
         {/* Inner Content Area */}

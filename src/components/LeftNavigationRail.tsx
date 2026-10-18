@@ -61,12 +61,15 @@ export const LeftNavigationRail: React.FC = () => {
 
       {/* Bottom Help Icon */}
       <div className="flex flex-col items-center gap-3">
-        <button
+        <a
+          href="https://github.com/Ajaykrishnanand/p2p-zkarkiv/blob/main/HOW_TO_USE.md"
+          target="_blank"
+          rel="noreferrer"
           className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition-colors"
-          title="Arkiv DB-Chain Help & Docs"
+          title="Arkiv DB-Chain Help & Public How-To-Use Guide"
         >
           <HelpCircle className="w-5 h-5" />
-        </button>
+        </a>
       </div>
     </aside>
   );

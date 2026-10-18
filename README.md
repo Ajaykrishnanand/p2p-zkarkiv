@@ -3,6 +3,7 @@
 [![Tiramisu Testnet](https://img.shields.io/badge/Network-Tiramisu%20Testnet%20(7738577)-059669?style=flat-square)](https://tiramisu.explorer.arkiv.network)
 [![Arkiv SDK](https://img.shields.io/badge/@arkiv--network/sdk-v0.8.1-10b981?style=flat-square)](https://www.npmjs.com/package/@arkiv-network/sdk)
 [![Zero PII](https://img.shields.io/badge/Privacy-100%25%20Synthetic%20Zero--PII-3b82f6?style=flat-square)](#zero-pii-guarantee)
+[![How to Use](https://img.shields.io/badge/Guide-How%20To%20Use-blue?style=flat-square)](HOW_TO_USE.md)
 [![License](https://img.shields.io/badge/License-MIT-zinc?style=flat-square)](LICENSE)
 
 > Built for the **Arkiv Global Tour Stop (Road to Devcon 8 Mumbai)**.  
@@ -45,10 +46,14 @@ Instead of uploading easily forged screenshots or leaking full bank statements, 
 
 ---
 
-## 3. Mandatory Gate Files
+## 3. Mandatory Gate Files & Verification Artifacts
 
-1. **[Arkiv Schema Specification (`arkiv/schema.md`)](arkiv/schema.md):** Complete indexed attribute types (`str`, `u256`, `bool`), payload JSON schemas, and TTL lifecycle policies.
-2. **[Developer Friction Report (`arkiv/friction.md`)](arkiv/friction.md):** 5 detailed, reproducible friction points with `@arkiv-network/sdk` v0.8.1 on Tiramisu Testnet.
+1. **[Public User & Developer Guide (`HOW_TO_USE.md`)](HOW_TO_USE.md):** Complete guide for trading as a Maker, taking orders as a Taker, evaluating via 1-click Judge mode, and inspecting raw Arkiv entities.
+2. **[Presentation & Pitch Deck (`presentation.md`)](presentation.md):** 10-slide comprehensive pitch deck with problem statement, architecture shootout, 5 core Arkiv features, live demo flow, and speaker notes.
+3. **[Testing & Verification Guide (`test.md`)](test.md):** Definitive breakdown of **what is fully testnet** (Arkiv Tiramisu & Base Sepolia) vs. **what is simulation** (Indian banking rails & client zkTLS prover), with 6 reproducible test commands.
+4. **[Master Task Matrix (`task.md`)](task.md):** 44-task execution tracking matrix covering all 8 development phases, file implementations, and milestone statuses.
+5. **[Arkiv Schema Specification (`arkiv/schema.md`)](arkiv/schema.md):** Complete indexed attribute types (`str`, `u256`, `bool`), payload JSON schemas, and TTL lifecycle policies.
+6. **[Developer Friction Report (`arkiv/friction.md`)](arkiv/friction.md):** 5 detailed, reproducible friction points with `@arkiv-network/sdk` v0.8.1 on Tiramisu Testnet.
 
 ---
 
