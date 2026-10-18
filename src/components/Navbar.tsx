@@ -1,27 +1,41 @@
 "use client";
 
 import React, { useState } from "react";
-import { ShieldCheck, ExternalLink, Copy, Check, Terminal, Zap } from "lucide-react";
+import {
+  Search,
+  ChevronDown,
+  Bell,
+  User,
+  Wallet,
+  ExternalLink,
+  Copy,
+  Check,
+  Zap,
+  ArrowUpRight,
+  ShieldCheck,
+} from "lucide-react";
 import { TIRAMISU_CHAIN_ID, ARKIV_EXPLORER_URL } from "@/lib/arkivClient";
 
 interface NavbarProps {
   walletAddress: string;
-  isJudgeDemoActive?: boolean;
-  onToggleDemoMode?: () => void;
-  onRefreshOrders?: () => void;
+  isJudgeDemoActive: boolean;
+  onToggleDemoMode: () => void;
+  onConnectWallet?: () => void;
+  isMetaMaskConnected?: boolean;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
   walletAddress,
   isJudgeDemoActive,
   onToggleDemoMode,
-  onRefreshOrders,
+  onConnectWallet,
+  isMetaMaskConnected,
 }) => {
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState<boolean>(false);
 
   const shortAddress = walletAddress
     ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`
-    : "Connecting...";
+    : "Connect Wallet";
 
   const handleCopy = () => {
     if (!walletAddress) return;
@@ -31,107 +45,156 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-zinc-800 bg-zinc-950/80 backdrop-blur-md">
-      {/* Top Judge & Security Alert Banner */}
-      <div className="bg-emerald-950/40 border-b border-emerald-500/20 px-4 py-1.5 text-xs">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2 text-emerald-400 font-medium">
-            <span className="flex h-2 w-2 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-            </span>
-            <span className="font-semibold tracking-wide">SYNTHETIC DATA GUARD ACTIVE:</span>
-            <span className="text-zinc-300 hidden sm:inline">
-              Zero Real PII on Arkiv DB-Chain • Strictly enforcing <code className="text-emerald-300 font-mono">*.synth@upi</code> aliases
-            </span>
-          </div>
+    <div className="w-full bg-white border-b border-slate-200">
+      {/* Top Security & Zero-PII ticker alert */}
+      <div className="bg-emerald-50 border-b border-emerald-100 px-4 py-1.5 text-xs text-emerald-800 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="flex h-2 w-2 relative">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+          </span>
+          <span className="font-bold">ZERO REAL PII ON ARKIV:</span>
+          <span className="hidden sm:inline text-emerald-700">
+            Strictly synthetic aliases (<code className="font-mono font-semibold">*.synth@upi</code>) and client-side zkTLS bank session proofs.
+          </span>
+        </div>
 
-          <div className="flex items-center gap-3 text-zinc-400 text-[11px]">
-            <span className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded text-zinc-300">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
-              Tiramisu Testnet ({TIRAMISU_CHAIN_ID})
-            </span>
-            <a
-              href="https://github.com/Ajaykrishnanand/p2p-zkarkiv"
-              target="_blank"
-              rel="noreferrer"
-              className="text-zinc-400 hover:text-white transition-colors underline flex items-center gap-1"
-            >
-              GitHub Repo
-              <ExternalLink className="w-3 h-3" />
-            </a>
-          </div>
+        <div className="flex items-center gap-3 text-[11px] text-emerald-700 font-mono">
+          <span>Chain ID: {TIRAMISU_CHAIN_ID}</span>
+          <a
+            href={ARKIV_EXPLORER_URL}
+            target="_blank"
+            rel="noreferrer"
+            className="hover:underline flex items-center gap-1 font-semibold"
+          >
+            Tiramisu Explorer
+            <ExternalLink className="w-3 h-3" />
+          </a>
         </div>
       </div>
 
-      {/* Main Navbar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        {/* Brand */}
-        <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-lg bg-gradient-to-tr from-emerald-600 via-teal-500 to-cyan-500 p-0.5 flex items-center justify-center shadow-lg shadow-emerald-500/10">
-            <div className="h-full w-full bg-zinc-950 rounded-[7px] flex items-center justify-center">
-              <ShieldCheck className="w-5 h-5 text-emerald-400" />
+      {/* Main Pro-Exchange Ticker Header */}
+      <div className="px-4 py-3 flex flex-wrap items-center justify-between gap-4">
+        {/* Left: Search input */}
+        <div className="flex items-center gap-4">
+          <div className="relative w-64 hidden md:block">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+            <input
+              type="text"
+              placeholder="Search pair or synthetic alias..."
+              className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:border-slate-400"
+            />
+          </div>
+
+          {/* Market Pair Badge */}
+          <div className="flex items-center gap-3 border-l border-slate-100 pl-4">
+            <button className="flex items-center gap-2 text-left hover:bg-slate-50 px-2 py-1 rounded-xl transition-colors">
+              <div className="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs shadow-sm">
+                $
+              </div>
+              <div>
+                <div className="flex items-center gap-1 font-bold text-slate-900 text-sm">
+                  <span>USDC - INR</span>
+                  <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                </div>
+                <div className="text-[10px] text-slate-400 font-medium">P2P Spot Orderbook</div>
+              </div>
+            </button>
+          </div>
+
+          {/* Live Price Ticker Display */}
+          <div className="flex items-baseline gap-2 pl-2">
+            <span className="text-2xl font-extrabold text-emerald-600 font-mono tracking-tight">
+              ₹87.50
+            </span>
+            <div className="flex items-center text-xs font-bold text-emerald-600 gap-0.5">
+              <ArrowUpRight className="w-3.5 h-3.5" />
+              <span>+2.78%</span>
+              <span className="text-[10px] text-slate-400 font-normal ml-0.5">24h change</span>
             </div>
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-lg font-bold tracking-tight text-white">zkUPI<span className="text-emerald-400">-Arkiv</span></span>
-              <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 border border-zinc-700">
-                v1.0
-              </span>
+
+          {/* 24h Stats Columns */}
+          <div className="hidden lg:flex items-center gap-6 border-l border-slate-100 pl-4 text-xs font-mono">
+            <div>
+              <div className="text-[10px] text-slate-400 uppercase font-sans">24h high</div>
+              <div className="font-bold text-slate-800">₹88.20</div>
             </div>
-            <p className="text-[11px] text-zinc-400 hidden sm:block">
-              Censorship-Resistant ZK P2P UPI Orderbook on Arkiv
-            </p>
+            <div>
+              <div className="text-[10px] text-slate-400 uppercase font-sans">24h low</div>
+              <div className="font-bold text-slate-800">₹86.40</div>
+            </div>
+            <div>
+              <div className="text-[10px] text-slate-400 uppercase font-sans">24h volume (USDC)</div>
+              <div className="font-bold text-slate-800">298,276.82</div>
+            </div>
+            <div>
+              <div className="text-[10px] text-slate-400 uppercase font-sans">24h turnover (INR)</div>
+              <div className="font-bold text-slate-800">₹24,876,213.56</div>
+            </div>
           </div>
         </div>
 
         {/* Right Action Items */}
         <div className="flex items-center gap-3">
-          {onToggleDemoMode && (
-            <button
-              onClick={onToggleDemoMode}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
-                isJudgeDemoActive
-                  ? "bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm shadow-amber-500/10"
-                  : "bg-zinc-800/80 text-zinc-300 hover:bg-zinc-800 border border-zinc-700"
-              }`}
-            >
-              <Zap className="w-3.5 h-3.5" />
-              <span>{isJudgeDemoActive ? "Judge Mode Active" : "1-Click Judge Demo"}</span>
-            </button>
-          )}
+          {/* Judge Demo Toggle */}
+          <button
+            onClick={onToggleDemoMode}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
+              isJudgeDemoActive
+                ? "bg-emerald-50 text-emerald-700 border border-emerald-300 shadow-xs"
+                : "bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200"
+            }`}
+          >
+            <Zap className="w-3.5 h-3.5 text-emerald-600" />
+            <span>{isJudgeDemoActive ? "Judge Demo: Active" : "1-Click Judge Demo"}</span>
+          </button>
 
-          {/* Burner Wallet Pill */}
-          <div className="flex items-center gap-2 bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg text-xs text-zinc-300">
-            <div className="flex items-center gap-1.5">
-              <Terminal className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="text-zinc-500 hidden md:inline">Signer:</span>
-              <span className="font-mono text-zinc-200">{shortAddress}</span>
-            </div>
+          {/* Connect / Wallet Balance Pill */}
+          <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl p-1 text-xs">
+            <button
+              onClick={onConnectWallet}
+              className="flex items-center gap-1.5 px-3 py-1 text-slate-800 font-bold hover:bg-slate-100 rounded-lg transition-colors"
+            >
+              <Wallet className="w-3.5 h-3.5 text-blue-600" />
+              <span>{isMetaMaskConnected ? "MetaMask" : "Burner Signer"}:</span>
+              <span className="font-mono font-medium text-slate-600">{shortAddress}</span>
+            </button>
 
             <button
               onClick={handleCopy}
-              className="p-1 hover:text-white text-zinc-400 transition-colors"
+              className="p-1 hover:text-slate-900 text-slate-400 rounded transition-colors"
               title="Copy Address"
             >
-              {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+              {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
             </button>
+          </div>
 
-            {walletAddress && (
-              <a
-                href={`${ARKIV_EXPLORER_URL}/address/${walletAddress}`}
-                target="_blank"
-                rel="noreferrer"
-                className="p-1 hover:text-white text-zinc-400 transition-colors"
-                title="View on Arkiv Explorer"
-              >
-                <ExternalLink className="w-3.5 h-3.5" />
-              </a>
-            )}
+          {/* Faucet Link Pill */}
+          <a
+            href="https://hub.arkiv.network/faucet"
+            target="_blank"
+            rel="noreferrer"
+            className="hidden sm:flex px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs items-center gap-1.5 shadow-sm transition-all"
+          >
+            <span>Get Test GLM</span>
+            <ExternalLink className="w-3 h-3" />
+          </a>
+
+          {/* Notification Bell */}
+          <button className="relative p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-50">
+            <Bell className="w-4 h-4" />
+            <span className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-rose-500 text-white text-[9px] font-bold flex items-center justify-center">
+              8
+            </span>
+          </button>
+
+          {/* Profile Avatar */}
+          <div className="w-8 h-8 rounded-full bg-slate-200 border border-slate-300 flex items-center justify-center text-slate-700 font-bold text-xs">
+            <User className="w-4 h-4" />
           </div>
         </div>
       </div>
-    </header>
+    </div>
   );
 };

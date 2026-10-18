@@ -6,14 +6,13 @@ import {
   ShieldCheck,
   Lock,
   ArrowRight,
-  Search,
   Filter,
   CheckCircle2,
   RefreshCw,
   Code2,
   AlertCircle,
   Building2,
-  Sparkles,
+  Coins,
 } from "lucide-react";
 import { P2POrderEntity } from "@/lib/arkivOrderbook";
 
@@ -32,217 +31,225 @@ export const LiveOrderbook: React.FC<LiveOrderbookProps> = ({
   onSelectOrderToLock,
   onInspectEntity,
 }) => {
-  const [filterStatus, setFilterStatus] = useState<string>("ALL");
-  const [maxRateFilter, setMaxRateFilter] = useState<number>(100);
+  const [activeTab, setActiveTab] = useState<"ACTIVE" | "HISTORY" | "TRADES">("ACTIVE");
+  const [hideOtherPairs, setHideOtherPairs] = useState<boolean>(true);
 
   const filteredOrders = orders.filter((order) => {
     const status = String(order.attributes?.status || "OPEN").toUpperCase();
-    if (filterStatus !== "ALL" && status !== filterStatus) return false;
-    const rateNum = Number(order.attributes?.rate || 87);
-    if (rateNum > maxRateFilter) return false;
+    if (activeTab === "ACTIVE") return status === "OPEN" || status === "LOCKED";
+    if (activeTab === "HISTORY") return status === "SETTLED";
     return true;
   });
 
-  const getBankBadge = (alias: string) => {
-    const handle = (alias || "").split("@")[1] || "upi";
-    return handle.toUpperCase();
-  };
-
   return (
-    <div className="space-y-4">
-      {/* Filters and Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-zinc-900/60 border border-zinc-800 p-4 rounded-xl">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <span className="font-semibold text-white text-base">Live P2P Liquidity Book</span>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">
-              {filteredOrders.length} {filteredOrders.length === 1 ? "Order" : "Orders"}
+    <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm text-xs">
+      {/* Table Header and Tabs */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+        <div className="flex items-center gap-6">
+          <button
+            onClick={() => setActiveTab("ACTIVE")}
+            className={`font-bold pb-2 transition-colors flex items-center gap-2 ${
+              activeTab === "ACTIVE"
+                ? "text-slate-900 border-b-2 border-slate-900"
+                : "text-slate-400 hover:text-slate-600"
+            }`}
+          >
+            <span>Active Orders</span>
+            <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
+              {orders.filter((o) => o.attributes?.status !== "SETTLED").length}
             </span>
-          </div>
+          </button>
+
+          <button
+            onClick={() => setActiveTab("HISTORY")}
+            className={`font-bold pb-2 transition-colors flex items-center gap-2 ${
+              activeTab === "HISTORY"
+                ? "text-slate-900 border-b-2 border-slate-900"
+                : "text-slate-400 hover:text-slate-600"
+            }`}
+          >
+            <span>Order History</span>
+            <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
+              {orders.filter((o) => o.attributes?.status === "SETTLED").length}
+            </span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab("TRADES")}
+            className={`font-bold pb-2 transition-colors ${
+              activeTab === "TRADES"
+                ? "text-slate-900 border-b-2 border-slate-900"
+                : "text-slate-400 hover:text-slate-600"
+            }`}
+          >
+            Trade History
+          </button>
         </div>
 
-        {/* Filter controls */}
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Status buttons */}
-          <div className="inline-flex rounded-lg bg-zinc-950 p-1 border border-zinc-800 text-xs">
-            {["ALL", "OPEN", "LOCKED", "SETTLED"].map((status) => (
-              <button
-                key={status}
-                onClick={() => setFilterStatus(status)}
-                className={`px-2.5 py-1 rounded-md font-medium transition-colors ${
-                  filterStatus === status
-                    ? "bg-zinc-800 text-white shadow-sm"
-                    : "text-zinc-400 hover:text-zinc-200"
-                }`}
-              >
-                {status}
-              </button>
-            ))}
-          </div>
+        <div className="flex items-center gap-4 text-slate-600">
+          <label className="flex items-center gap-1.5 cursor-pointer text-xs select-none">
+            <input
+              type="checkbox"
+              checked={hideOtherPairs}
+              onChange={(e) => setHideOtherPairs(e.target.checked)}
+              className="rounded accent-slate-900"
+            />
+            <span>Hide other pairs</span>
+          </label>
 
-          {/* Rate selector */}
-          <div className="flex items-center gap-1.5 text-xs text-zinc-400 bg-zinc-950 px-2.5 py-1.5 rounded-lg border border-zinc-800">
-            <Filter className="w-3.5 h-3.5 text-zinc-500" />
-            <span>Rate ≤ ₹{maxRateFilter}</span>
-          </div>
-
-          {/* Refresh button */}
           <button
             onClick={onRefresh}
             disabled={isLoading}
-            className="p-1.5 rounded-lg bg-zinc-950 hover:bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-800 transition-colors disabled:opacity-50"
+            className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-900 transition-colors"
             title="Refresh Arkiv Queries"
           >
-            <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin text-emerald-400" : ""}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin text-emerald-600" : ""}`} />
+            <span>Refresh</span>
           </button>
         </div>
       </div>
 
-      {/* Orders Grid */}
+      {/* Orders Table */}
       {filteredOrders.length === 0 ? (
-        <div className="text-center py-12 px-4 rounded-xl border border-dashed border-zinc-800 bg-zinc-950/40">
-          <AlertCircle className="w-8 h-8 text-zinc-600 mx-auto mb-2" />
-          <h4 className="text-zinc-300 font-medium text-sm">No Active Liquidity Matches Filter</h4>
-          <p className="text-zinc-500 text-xs max-w-sm mx-auto mt-1">
-            Create a new liquidity order above or click "1-Click Judge Demo" to instantly populate live testnet entities.
+        <div className="text-center py-12 text-slate-400">
+          <AlertCircle className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+          <p className="font-semibold text-slate-600 text-sm">No orders in this view</p>
+          <p className="text-xs text-slate-400 mt-0.5">
+            Post an order via the Trade panel or click "1-Click Judge Demo" above to create on-chain testnet entities.
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredOrders.map((order) => {
-            const status = String(order.attributes?.status || "OPEN").toUpperCase();
-            const amountInr = Number(order.attributes?.amountInr || 0);
-            const rate = Number(order.attributes?.rate || 87);
-            const usdcAmount = order.data?.usdcAmount || (amountInr / (rate || 87)).toFixed(2);
-            const isSettled = status === "SETTLED";
-            const isLocked = status === "LOCKED";
-            const isOpen = status === "OPEN";
-            const bankHandle = getBankBadge(order.data?.syntheticUpiAlias);
+        <div className="overflow-x-auto mt-2">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b border-slate-100 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                <th className="py-3 px-3">Pair</th>
+                <th className="py-3 px-3">Order Type</th>
+                <th className="py-3 px-3">Direction</th>
+                <th className="py-3 px-3 text-right">Order Value</th>
+                <th className="py-3 px-3 text-right">Order Quantity</th>
+                <th className="py-3 px-3 text-right">Limit Price</th>
+                <th className="py-3 px-3">Status / TTL</th>
+                <th className="py-3 px-3">Payee Routing</th>
+                <th className="py-3 px-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 font-mono text-[11px]">
+              {filteredOrders.map((order) => {
+                const status = String(order.attributes?.status || "OPEN").toUpperCase();
+                const amountInr = Number(order.attributes?.amountInr || 0);
+                const rate = Number(order.attributes?.rate || 87.5);
+                const usdcAmount = order.data?.usdcAmount || (amountInr / (rate || 87.5)).toFixed(2);
+                const isSettled = status === "SETTLED";
+                const isLocked = status === "LOCKED";
+                const isOpen = status === "OPEN";
 
-            return (
-              <div
-                key={order.key}
-                className="group relative rounded-xl border border-zinc-800 bg-zinc-900/40 hover:bg-zinc-900/80 transition-all p-5 flex flex-col justify-between hover:border-zinc-700 shadow-sm"
-              >
-                <div>
-                  {/* Top order status & rate */}
-                  <div className="flex items-center justify-between mb-3">
-                    <span
-                      className={`text-[11px] font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1 ${
-                        isOpen
-                          ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
-                          : isLocked
-                          ? "bg-amber-500/10 text-amber-400 border border-amber-500/30"
-                          : "bg-blue-500/10 text-blue-400 border border-blue-500/30"
-                      }`}
-                    >
-                      {isOpen && <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>}
-                      {isLocked && <Lock className="w-3 h-3 text-amber-400" />}
-                      {isSettled && <CheckCircle2 className="w-3 h-3 text-blue-400" />}
-                      {status}
-                    </span>
-
-                    <span className="text-xs font-mono font-medium text-zinc-400">
-                      Rate: <span className="text-zinc-200">₹{rate} / USDC</span>
-                    </span>
-                  </div>
-
-                  {/* Amounts */}
-                  <div className="mb-4">
-                    <div className="flex items-baseline justify-between">
-                      <div>
-                        <div className="text-2xl font-bold text-white tracking-tight">
-                          ₹{amountInr.toLocaleString("en-IN")}
+                return (
+                  <tr key={order.key} className="hover:bg-slate-50/70 transition-colors">
+                    {/* Pair */}
+                    <td className="py-3 px-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-[10px]">
+                          $
                         </div>
-                        <div className="text-xs text-zinc-400">Fiat Order Value (INR)</div>
+                        <span className="font-bold text-slate-800">USDC - INR</span>
                       </div>
+                    </td>
 
-                      <div className="text-right">
-                        <div className="text-lg font-semibold text-emerald-400">
-                          {usdcAmount} USDC
-                        </div>
-                        <div className="text-[11px] text-zinc-500">Escrow Payout</div>
+                    {/* Order Type */}
+                    <td className="py-3 px-3 text-slate-600 font-sans">Limit</td>
+
+                    {/* Direction */}
+                    <td className="py-3 px-3">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200">
+                        BUY
+                      </span>
+                    </td>
+
+                    {/* Order Value */}
+                    <td className="py-3 px-3 text-right font-bold text-slate-900">
+                      ₹{amountInr.toLocaleString("en-IN")}.00
+                    </td>
+
+                    {/* Order Quantity */}
+                    <td className="py-3 px-3 text-right text-slate-700 font-semibold">
+                      {usdcAmount} USDC
+                    </td>
+
+                    {/* Limit Price */}
+                    <td className="py-3 px-3 text-right text-slate-600">
+                      ₹{rate.toFixed(2)}
+                    </td>
+
+                    {/* Status / TTL */}
+                    <td className="py-3 px-3 font-sans">
+                      <span
+                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                          isOpen
+                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                            : isLocked
+                            ? "bg-amber-50 text-amber-700 border border-amber-200"
+                            : "bg-blue-50 text-blue-700 border border-blue-200"
+                        }`}
+                      >
+                        {isOpen && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />}
+                        {isLocked && <Lock className="w-3 h-3 text-amber-600" />}
+                        {isSettled && <CheckCircle2 className="w-3 h-3 text-blue-600" />}
+                        {status}
+                      </span>
+                    </td>
+
+                    {/* Payee Routing */}
+                    <td className="py-3 px-3">
+                      <span className="bg-slate-100 px-2 py-0.5 rounded border border-slate-200 text-slate-700 text-[10px]">
+                        {order.data?.syntheticUpiAlias || "merchant.synth@okhdfc"}
+                      </span>
+                    </td>
+
+                    {/* Actions */}
+                    <td className="py-3 px-3 text-right">
+                      <div className="flex items-center justify-end gap-1.5 font-sans">
+                        <button
+                          onClick={() => onInspectEntity(order)}
+                          className="p-1 rounded text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-colors"
+                          title="Inspect Raw Arkiv Entity"
+                        >
+                          <Code2 className="w-3.5 h-3.5" />
+                        </button>
+
+                        {isOpen && (
+                          <button
+                            onClick={() => onSelectOrderToLock(order)}
+                            className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] flex items-center gap-1 shadow-xs transition-all"
+                          >
+                            <span>Lock & Pay</span>
+                            <ArrowRight className="w-3 h-3" />
+                          </button>
+                        )}
+
+                        {isLocked && (
+                          <button
+                            onClick={() => onSelectOrderToLock(order)}
+                            className="px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-[11px] flex items-center gap-1 shadow-xs transition-all"
+                          >
+                            <span>Settle ZK</span>
+                            <ArrowRight className="w-3 h-3" />
+                          </button>
+                        )}
+
+                        {isSettled && (
+                          <span className="text-emerald-600 font-bold text-[10px] flex items-center gap-0.5">
+                            <ShieldCheck className="w-3.5 h-3.5" />
+                            Settled
+                          </span>
+                        )}
                       </div>
-                    </div>
-                  </div>
-
-                  {/* Synthetic Alias & TTL */}
-                  <div className="space-y-1.5 border-t border-zinc-800/80 pt-3 text-xs">
-                    <div className="flex items-center justify-between">
-                      <span className="text-zinc-500 flex items-center gap-1">
-                        <Building2 className="w-3 h-3 text-zinc-500" />
-                        Routing ({bankHandle}):
-                      </span>
-                      <span className="font-mono text-zinc-300 text-[11px] bg-zinc-950 px-2 py-0.5 rounded border border-zinc-800">
-                        {order.data?.syntheticUpiAlias || "demo.synth@okhdfc"}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between text-zinc-500">
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-3 h-3 text-zinc-400" />
-                        Expires In:
-                      </span>
-                      <span className="font-mono text-zinc-300">
-                        {isSettled ? "7 Days (Settled)" : isLocked ? "30 Mins (Payment Lock)" : "60 Mins"}
-                      </span>
-                    </div>
-
-                    {order.attributes?.zkVerified && (
-                      <div className="flex items-center justify-between text-[11px] text-emerald-400 font-medium pt-1">
-                        <span className="flex items-center gap-1">
-                          <ShieldCheck className="w-3.5 h-3.5" />
-                          zkTLS Groth16 Verified
-                        </span>
-                        <span className="text-zinc-500 font-mono">Nullifier Active</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Bottom Actions */}
-                <div className="mt-5 pt-3 border-t border-zinc-800 flex items-center justify-between gap-2">
-                  <button
-                    onClick={() => onInspectEntity(order)}
-                    className="text-xs text-zinc-400 hover:text-zinc-200 flex items-center gap-1 p-1.5 rounded hover:bg-zinc-800 transition-colors"
-                    title="Inspect Raw Arkiv Entity Key and Payload"
-                  >
-                    <Code2 className="w-3.5 h-3.5 text-zinc-400" />
-                    <span>Raw Entity</span>
-                  </button>
-
-                  {isOpen && (
-                    <button
-                      onClick={() => onSelectOrderToLock(order)}
-                      className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs flex items-center gap-1.5 shadow-sm transition-all"
-                    >
-                      <span>Lock & Pay UPI</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-
-                  {isLocked && (
-                    <button
-                      onClick={() => onSelectOrderToLock(order)}
-                      className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-semibold text-xs flex items-center gap-1.5 shadow-sm transition-all"
-                    >
-                      <span>Settle with ZK Proof</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-
-                  {isSettled && (
-                    <button
-                      onClick={() => onInspectEntity(order)}
-                      className="px-3 py-1.5 rounded-lg bg-zinc-800 text-zinc-400 text-xs font-medium cursor-default"
-                    >
-                      Trade Settled
-                    </button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
     </div>

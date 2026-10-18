@@ -3,7 +3,7 @@ import {
   createWalletClient,
 } from "@arkiv-network/sdk";
 import { tiramisu } from "@arkiv-network/sdk/chains";
-import { http, webSocket } from "viem";
+import { http, webSocket, custom } from "viem";
 import { privateKeyToAccount, generatePrivateKey } from "viem/accounts";
 
 // Network Constants for Tiramisu Testnet
@@ -31,8 +31,58 @@ export const wsPublicClient = typeof window !== "undefined"
   : publicClient;
 
 /**
- * Generates an ephemeral Burner Wallet Client on Tiramisu.
- * Allows hackathon judges to test the app without manual wallet setup.
+ * Connects directly to MetaMask or browser EIP-1193 wallet to sign live on-chain transactions.
+ */
+export async function getBrowserWalletClient() {
+  if (typeof window === "undefined" || !(window as any).ethereum) {
+    throw new Error("No Web3 wallet (MetaMask) detected in browser.");
+  }
+
+  const ethereum = (window as any).ethereum;
+
+  // Request accounts
+  const accounts = await ethereum.request({ method: "eth_requestAccounts" });
+  if (!accounts || accounts.length === 0) {
+    throw new Error("No accounts authorized in MetaMask.");
+  }
+
+  const account = accounts[0] as `0x${string}`;
+
+  // Ensure network is Tiramisu Testnet
+  try {
+    await ethereum.request({
+      method: "wallet_switchEthereumChain",
+      params: [{ chainId: `0x${TIRAMISU_CHAIN_ID.toString(16)}` }],
+    });
+  } catch (switchError: any) {
+    // Chain not added, request add
+    if (switchError.code === 4902) {
+      await ethereum.request({
+        method: "wallet_addEthereumChain",
+        params: [
+          {
+            chainId: `0x${TIRAMISU_CHAIN_ID.toString(16)}`,
+            chainName: "Arkiv Tiramisu Testnet",
+            nativeCurrency: { name: "GLM", symbol: "GLM", decimals: 18 },
+            rpcUrls: [ARKIV_HTTP_RPC],
+            blockExplorerUrls: [ARKIV_EXPLORER_URL],
+          },
+        ],
+      });
+    }
+  }
+
+  const client = createWalletClient({
+    chain: tiramisu,
+    transport: custom(ethereum),
+    account,
+  });
+
+  return { account, client };
+}
+
+/**
+ * Generates an ephemeral Burner Wallet Client on Tiramisu as a fallback.
  */
 export function getBurnerWalletClient(privateKey: `0x${string}`) {
   const account = privateKeyToAccount(privateKey);

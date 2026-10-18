@@ -2,23 +2,22 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import {
-  ShieldCheck,
   Zap,
   Plus,
   ArrowRight,
-  RefreshCw,
-  Database,
-  Lock,
-  CheckCircle2,
   ExternalLink,
-  Info,
-  Clock,
+  ShieldCheck,
+  CheckCircle2,
+  Lock,
   Sparkles,
   Layers,
 } from "lucide-react";
+import { LeftNavigationRail } from "@/components/LeftNavigationRail";
 import { Navbar } from "@/components/Navbar";
+import { PriceChart } from "@/components/PriceChart";
+import { OrderBookTerminal } from "@/components/OrderBookTerminal";
+import { TradeExecutionPanel } from "@/components/TradeExecutionPanel";
 import { LiveOrderbook } from "@/components/LiveOrderbook";
-import { CreateOrderModal } from "@/components/CreateOrderModal";
 import { ZkSettlementModal } from "@/components/ZkSettlementModal";
 import { ExplorerInspector } from "@/components/ExplorerInspector";
 import {
@@ -30,6 +29,7 @@ import {
 } from "@/lib/arkivOrderbook";
 import {
   getBurnerWalletClient,
+  getBrowserWalletClient,
   getOrCreateDemoPrivateKey,
   TIRAMISU_CHAIN_ID,
   ARKIV_EXPLORER_URL,
@@ -38,17 +38,19 @@ import { ZkProofBundle } from "@/lib/zkTlsProver";
 import { generateSyntheticUpi } from "@/lib/syntheticGuard";
 
 export default function Home() {
-  const [burnerAccount, setBurnerAccount] = useState<{
+  const [walletAccount, setWalletAccount] = useState<{
     address: string;
     client: any;
   } | null>(null);
 
+  const [isMetaMask, setIsMetaMask] = useState<boolean>(false);
   const [orders, setOrders] = useState<P2POrderEntity[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isJudgeDemoActive, setIsJudgeDemoActive] = useState<boolean>(true);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [selectedBookPrice, setSelectedBookPrice] = useState<number | undefined>(undefined);
 
-  // Modals state
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
+  // Modals
   const [orderToLock, setOrderToLock] = useState<P2POrderEntity | null>(null);
   const [inspectedEntity, setInspectedEntity] = useState<P2POrderEntity | null>(null);
 
@@ -57,12 +59,29 @@ export default function Home() {
   const [judgeDemoOrder, setJudgeDemoOrder] = useState<P2POrderEntity | null>(null);
   const [judgeStatusMsg, setJudgeStatusMsg] = useState<string | null>(null);
 
-  // Initialize Burner Wallet on Client Mount
+  // Initialize Burner Wallet on Client Mount as default
   useEffect(() => {
-    const pk = getOrCreateDemoPrivateKey();
-    const { account, client } = getBurnerWalletClient(pk);
-    setBurnerAccount({ address: account.address, client });
+    try {
+      const pk = getOrCreateDemoPrivateKey();
+      const { account, client } = getBurnerWalletClient(pk);
+      setWalletAccount({ address: account.address, client });
+    } catch (e) {
+      console.warn("Burner wallet initialization warning:", e);
+    }
   }, []);
+
+  // Connect MetaMask if requested
+  const handleConnectMetaMask = async () => {
+    try {
+      const { account, client } = await getBrowserWalletClient();
+      setWalletAccount({ address: account, client });
+      setIsMetaMask(true);
+      setJudgeStatusMsg(`Connected MetaMask: ${account.slice(0, 8)}...`);
+    } catch (err: any) {
+      console.error("MetaMask connection failed:", err);
+      alert(err?.message || "Failed to connect MetaMask");
+    }
+  };
 
   // Fetch orders from Arkiv DB-Chain
   const fetchOrders = useCallback(async () => {
@@ -70,7 +89,6 @@ export default function Home() {
       setIsLoading(true);
       const res = await queryOpenInrOrders();
       setOrders(res);
-      // Auto-update judgeDemoOrder if already present
       if (judgeDemoOrder) {
         const updated = res.find((o) => o.key === judgeDemoOrder.key);
         if (updated) setJudgeDemoOrder(updated);
@@ -82,50 +100,53 @@ export default function Home() {
     }
   }, [judgeDemoOrder]);
 
-  // Initial fetch and 8s reconciliation poll (hybrid sync)
+  // Initial fetch and 8s reconciliation poll
   useEffect(() => {
     fetchOrders();
     const interval = setInterval(fetchOrders, 8000);
     return () => clearInterval(interval);
   }, [fetchOrders]);
 
-  // Handle Order Creation
-  const handleCreateOrder = async (params: {
+  // Post Order via Trade Panel
+  const handlePostOrder = async (params: {
     amountInr: number;
     rateInrPerUsdc: number;
     syntheticUpiAlias: string;
     ttlMinutes: number;
   }) => {
-    if (!burnerAccount) throw new Error("Wallet client not ready");
+    if (!walletAccount) throw new Error("Wallet signer not initialized");
     const orderId = `ORD-${Math.floor(10000 + Math.random() * 90000)}`;
 
-    const tx = await createP2POrder(burnerAccount.client, {
-      orderId,
-      makerAddress: burnerAccount.address,
-      amountInr: params.amountInr,
-      usdcAmount: (params.amountInr / params.rateInrPerUsdc).toFixed(2),
-      rateInrPerUsdc: params.rateInrPerUsdc,
-      syntheticUpiAlias: params.syntheticUpiAlias,
-      ttlMinutes: params.ttlMinutes,
-    });
-
-    await fetchOrders();
-    return tx;
+    setIsSubmitting(true);
+    try {
+      await createP2POrder(walletAccount.client, {
+        orderId,
+        makerAddress: walletAccount.address,
+        amountInr: params.amountInr,
+        usdcAmount: (params.amountInr / params.rateInrPerUsdc).toFixed(2),
+        rateInrPerUsdc: params.rateInrPerUsdc,
+        syntheticUpiAlias: params.syntheticUpiAlias,
+        ttlMinutes: params.ttlMinutes,
+      });
+      await fetchOrders();
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Handle Order Lock
   const handleLockOrder = async (order: P2POrderEntity) => {
-    if (!burnerAccount) throw new Error("Wallet client not ready");
-    await lockP2POrder(burnerAccount.client, order.key, order.data, burnerAccount.address);
+    if (!walletAccount) throw new Error("Wallet signer not ready");
+    await lockP2POrder(walletAccount.client, order.key, order.data, walletAccount.address);
     await fetchOrders();
   };
 
   // Handle Order Settlement
   const handleSettleOrder = async (order: P2POrderEntity, zkBundle: ZkProofBundle) => {
-    if (!burnerAccount) throw new Error("Wallet client not ready");
+    if (!walletAccount) throw new Error("Wallet signer not ready");
     await settleOrderWithZkTlsProof(
-      burnerAccount.client,
-      burnerAccount.address as `0x${string}`,
+      walletAccount.client,
+      walletAccount.address as `0x${string}`,
       order.key,
       order.data,
       zkBundle
@@ -135,25 +156,24 @@ export default function Home() {
 
   // 1-Click Judge Demo Step 1: Create Order
   const handleJudgeStep1 = async () => {
-    if (!burnerAccount) return;
+    if (!walletAccount) return;
     try {
-      setJudgeStatusMsg("Executing createEntity on Tiramisu...");
+      setJudgeStatusMsg("Submitting createEntity to Arkiv Tiramisu...");
       const orderId = `ORD-${Math.floor(10000 + Math.random() * 90000)}`;
       const syntheticAlias = generateSyntheticUpi("judge", "okhdfc");
 
-      const tx = await createP2POrder(burnerAccount.client, {
+      const tx = await createP2POrder(walletAccount.client, {
         orderId,
-        makerAddress: burnerAccount.address,
+        makerAddress: walletAccount.address,
         amountInr: 5000,
-        usdcAmount: "57.47",
-        rateInrPerUsdc: 87,
+        usdcAmount: "57.14",
+        rateInrPerUsdc: 87.5,
         syntheticUpiAlias: syntheticAlias,
         ttlMinutes: 60,
       });
 
       await fetchOrders();
 
-      // Find the created order
       const newEntity: P2POrderEntity = {
         key: tx.key,
         attributes: {
@@ -166,8 +186,8 @@ export default function Home() {
         },
         data: {
           orderId,
-          makerAddress: burnerAccount.address,
-          usdcAmount: "57.47",
+          makerAddress: walletAccount.address,
+          usdcAmount: "57.14",
           syntheticUpiAlias: syntheticAlias,
           createdAt: new Date().toISOString(),
           takerAddress: null,
@@ -180,226 +200,231 @@ export default function Home() {
       setJudgeStep(2);
       setJudgeStatusMsg(`Created Entity Key: ${tx.key?.slice(0, 16)}...`);
     } catch (err: any) {
-      setJudgeStatusMsg(`Step 1 Error: ${err?.message}`);
+      setJudgeStatusMsg(`Step 1 Notice: ${err?.message || "Signer requires test GLM tokens or gas confirmation"}`);
     }
   };
 
   // 1-Click Judge Demo Step 2: Lock Order
   const handleJudgeStep2 = async () => {
-    if (!burnerAccount || !judgeDemoOrder) return;
+    if (!walletAccount || !judgeDemoOrder) return;
     try {
-      setJudgeStatusMsg("Calling patchEntity to set status: LOCKED (30m TTL)...");
-      await lockP2POrder(burnerAccount.client, judgeDemoOrder.key, judgeDemoOrder.data, burnerAccount.address);
+      setJudgeStatusMsg("Executing patchEntity: status LOCKED (30m TTL)...");
+      await lockP2POrder(walletAccount.client, judgeDemoOrder.key, judgeDemoOrder.data, walletAccount.address);
       await fetchOrders();
       setJudgeStep(3);
-      setJudgeStatusMsg("Order locked. Ready for zkTLS Proof settlement.");
+      setJudgeStatusMsg("Order locked on-chain. Ready for zkTLS Settlement.");
     } catch (err: any) {
       setJudgeStatusMsg(`Step 2 Error: ${err?.message}`);
     }
   };
 
-  // 1-Click Judge Demo Step 3: Open Settlement Modal
+  // 1-Click Judge Demo Step 3: Settle
   const handleJudgeStep3 = () => {
     if (!judgeDemoOrder) return;
     setOrderToLock(judgeDemoOrder);
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-zinc-950 text-zinc-100">
-      <Navbar
-        walletAddress={burnerAccount?.address || ""}
-        isJudgeDemoActive={isJudgeDemoActive}
-        onToggleDemoMode={() => setIsJudgeDemoActive(!isJudgeDemoActive)}
-        onRefreshOrders={fetchOrders}
-      />
+    <div className="flex min-h-screen bg-slate-50 text-slate-900 font-sans antialiased">
+      {/* Left Slim Navigation Rail */}
+      <LeftNavigationRail />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        {/* Hero Section */}
-        <div className="relative overflow-hidden rounded-2xl border border-zinc-800 bg-gradient-to-b from-zinc-900/90 via-zinc-900/40 to-zinc-950 p-6 sm:p-8">
-          <div className="max-w-3xl space-y-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold">
-              <ShieldCheck className="w-4 h-4" />
-              <span>Arkiv Global Tour Stop • Road to Devcon 8 Mumbai</span>
-            </div>
-
-            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white leading-tight">
-              Censorship-Resistant, Zero-Knowledge P2P UPI Orderbook on <span className="text-emerald-400">Arkiv</span>
-            </h1>
-
-            <p className="text-sm sm:text-base text-zinc-400 leading-relaxed">
-              Decentralized INR-to-USDC liquidity with auto-expiring quotes (`ExpirationTime`), zero real PII stored on-chain (`*.synth@upi`), and client-side zkTLS notarized proofs preventing fake screenshot fraud.
-            </p>
-
-            {/* Quick Metrics Bar */}
-            <div className="pt-2 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-              <div className="p-3 rounded-xl bg-zinc-950/70 border border-zinc-800/80">
-                <span className="text-zinc-500 block">Tiramisu Testnet</span>
-                <span className="text-white font-mono font-bold text-sm">Chain {TIRAMISU_CHAIN_ID}</span>
-              </div>
-              <div className="p-3 rounded-xl bg-zinc-950/70 border border-zinc-800/80">
-                <span className="text-zinc-500 block">Decentralized Orders</span>
-                <span className="text-emerald-400 font-mono font-bold text-sm">{orders.length} Active</span>
-              </div>
-              <div className="p-3 rounded-xl bg-zinc-950/70 border border-zinc-800/80">
-                <span className="text-zinc-500 block">Settlement Layer</span>
-                <span className="text-cyan-400 font-mono font-bold text-sm">zkTLS Groth16</span>
-              </div>
-              <div className="p-3 rounded-xl bg-zinc-950/70 border border-zinc-800/80">
-                <span className="text-zinc-500 block">Zero-PII Gate</span>
-                <span className="text-amber-400 font-mono font-bold text-sm">100% Enforced</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* 1-Click Judge 45-Second Demo Box */}
-        {isJudgeDemoActive && (
-          <div className="rounded-2xl border-2 border-emerald-500/30 bg-emerald-950/10 p-6 space-y-4 relative">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-emerald-500/20">
-              <div className="flex items-center gap-2 text-emerald-400 font-bold text-sm">
-                <Zap className="w-4 h-4" />
-                <span>45-Second Judge Evaluation Flow (Zero Setup Needed)</span>
-              </div>
-              <span className="text-xs text-zinc-400">
-                Experience all 5 Arkiv SDK features in 3 clicks using an ephemeral burner wallet.
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Step 1 Card */}
-              <div
-                className={`p-4 rounded-xl border transition-all ${
-                  judgeStep === 1
-                    ? "bg-zinc-900 border-emerald-500 shadow-md shadow-emerald-950/40"
-                    : "bg-zinc-950 border-zinc-800 opacity-80"
-                }`}
-              >
-                <div className="flex items-center justify-between text-xs mb-2">
-                  <span className="font-semibold text-emerald-400">Step 1: createEntity</span>
-                  <span className="text-zinc-500 font-mono">60m TTL</span>
-                </div>
-                <p className="text-xs text-zinc-400 mb-3">
-                  Post ₹5,000 INR order with synthetic alias <code className="text-zinc-200">*.synth@upi</code>.
-                </p>
-                <button
-                  onClick={handleJudgeStep1}
-                  disabled={judgeStep !== 1}
-                  className="w-full py-2 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs flex items-center justify-center gap-1.5 disabled:opacity-40 transition-all"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Post Order on Arkiv</span>
-                </button>
-              </div>
-
-              {/* Step 2 Card */}
-              <div
-                className={`p-4 rounded-xl border transition-all ${
-                  judgeStep === 2
-                    ? "bg-zinc-900 border-amber-500 shadow-md shadow-amber-950/40"
-                    : "bg-zinc-950 border-zinc-800 opacity-80"
-                }`}
-              >
-                <div className="flex items-center justify-between text-xs mb-2">
-                  <span className="font-semibold text-amber-400">Step 2: patchEntity</span>
-                  <span className="text-zinc-500 font-mono">30m Lock</span>
-                </div>
-                <p className="text-xs text-zinc-400 mb-3">
-                  Lock order as Buyer to prevent front-running while paying simulated UPI.
-                </p>
-                <button
-                  onClick={handleJudgeStep2}
-                  disabled={judgeStep !== 2}
-                  className="w-full py-2 px-3 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-semibold text-xs flex items-center justify-center gap-1.5 disabled:opacity-40 transition-all"
-                >
-                  <Lock className="w-3.5 h-3.5" />
-                  <span>Lock Order (Buyer)</span>
-                </button>
-              </div>
-
-              {/* Step 3 Card */}
-              <div
-                className={`p-4 rounded-xl border transition-all ${
-                  judgeStep === 3
-                    ? "bg-zinc-900 border-blue-500 shadow-md shadow-blue-950/40"
-                    : "bg-zinc-950 border-zinc-800 opacity-80"
-                }`}
-              >
-                <div className="flex items-center justify-between text-xs mb-2">
-                  <span className="font-semibold text-blue-400">Step 3: predictEntityKey</span>
-                  <span className="text-zinc-500 font-mono">zkTLS Settle</span>
-                </div>
-                <p className="text-xs text-zinc-400 mb-3">
-                  Compute Poseidon nullifier, predict key, and settle trade atomically.
-                </p>
-                <button
-                  onClick={handleJudgeStep3}
-                  disabled={judgeStep !== 3}
-                  className="w-full py-2 px-3 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs flex items-center justify-center gap-1.5 disabled:opacity-40 transition-all"
-                >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>Generate ZK Proof & Settle</span>
-                </button>
-              </div>
-            </div>
-
-            {judgeStatusMsg && (
-              <div className="p-2.5 rounded-lg bg-zinc-900/80 border border-zinc-800 text-xs font-mono text-zinc-300 flex items-center justify-between">
-                <span>{judgeStatusMsg}</span>
-                {judgeDemoOrder && (
-                  <button
-                    onClick={() => setInspectedEntity(judgeDemoOrder)}
-                    className="text-emerald-400 hover:underline flex items-center gap-1"
-                  >
-                    Inspect Entity
-                    <ExternalLink className="w-3 h-3" />
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Orderbook Header and Maker CTA */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-bold text-white tracking-tight">Active Liquidity Orderbook</h2>
-            <p className="text-xs text-zinc-400">
-              Queried directly from Arkiv DB-Chain nodes via <code className="text-emerald-400 font-mono">queryEntities</code>.
-            </p>
-          </div>
-
-          <button
-            onClick={() => setIsCreateModalOpen(true)}
-            className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs flex items-center gap-2 shadow-lg shadow-emerald-900/20 transition-all"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Post New Order</span>
-          </button>
-        </div>
-
-        {/* Main Live Orderbook */}
-        <LiveOrderbook
-          orders={orders}
-          isLoading={isLoading}
-          onRefresh={fetchOrders}
-          onSelectOrderToLock={(order) => setOrderToLock(order)}
-          onInspectEntity={(order) => setInspectedEntity(order)}
+      {/* Main Terminal Body */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Top Header & Ticker */}
+        <Navbar
+          walletAddress={walletAccount?.address || ""}
+          isJudgeDemoActive={isJudgeDemoActive}
+          onToggleDemoMode={() => setIsJudgeDemoActive(!isJudgeDemoActive)}
+          onConnectWallet={handleConnectMetaMask}
+          isMetaMaskConnected={isMetaMask}
         />
-      </main>
+
+        {/* Inner Content Area */}
+        <div className="p-4 sm:p-5 space-y-4 max-w-[1700px] w-full mx-auto">
+          {/* 45-Second Judge Evaluation Control Bar */}
+          {isJudgeDemoActive && (
+            <div className="rounded-2xl border border-emerald-200 bg-white p-4 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <div className="p-1 rounded bg-emerald-50 text-emerald-600 font-bold">
+                    <Zap className="w-4 h-4" />
+                  </div>
+                  <span className="font-bold text-slate-800 text-sm">
+                    45-Second Judge Evaluation Flow
+                  </span>
+                  <span className="text-[11px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                    All 5 Core Features Active
+                  </span>
+                </div>
+                <div className="flex items-center gap-3 text-xs text-slate-500">
+                  <span>Zero Indian Bank Account Needed</span>
+                  <a
+                    href="https://hub.arkiv.network/faucet"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-blue-600 font-bold hover:underline"
+                  >
+                    Get Free Test GLM →
+                  </a>
+                </div>
+              </div>
+
+              {/* 3 Step Interactive Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">
+                {/* Step 1 */}
+                <div
+                  className={`p-3 rounded-xl border transition-all ${
+                    judgeStep === 1
+                      ? "bg-emerald-50/50 border-emerald-300 shadow-xs"
+                      : "bg-slate-50/60 border-slate-200 opacity-70"
+                  }`}
+                >
+                  <div className="flex justify-between items-center text-xs mb-1">
+                    <span className="font-bold text-slate-800">1. createEntity</span>
+                    <span className="text-[10px] font-mono text-emerald-700">60m TTL</span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 mb-2.5">
+                    Post ₹5,000 INR order with synthetic alias <code className="text-slate-800 font-bold">*.synth@upi</code>.
+                  </p>
+                  <button
+                    onClick={handleJudgeStep1}
+                    disabled={judgeStep !== 1}
+                    className="w-full py-1.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs disabled:opacity-40 transition-all"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Post Order on Arkiv</span>
+                  </button>
+                </div>
+
+                {/* Step 2 */}
+                <div
+                  className={`p-3 rounded-xl border transition-all ${
+                    judgeStep === 2
+                      ? "bg-amber-50/50 border-amber-300 shadow-xs"
+                      : "bg-slate-50/60 border-slate-200 opacity-70"
+                  }`}
+                >
+                  <div className="flex justify-between items-center text-xs mb-1">
+                    <span className="font-bold text-slate-800">2. patchEntity</span>
+                    <span className="text-[10px] font-mono text-amber-700">30m Lock</span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 mb-2.5">
+                    Lock order as Buyer to prevent double-swaps while simulated UPI is processed.
+                  </p>
+                  <button
+                    onClick={handleJudgeStep2}
+                    disabled={judgeStep !== 2}
+                    className="w-full py-1.5 px-3 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs disabled:opacity-40 transition-all"
+                  >
+                    <Lock className="w-3.5 h-3.5" />
+                    <span>Lock Order (Buyer)</span>
+                  </button>
+                </div>
+
+                {/* Step 3 */}
+                <div
+                  className={`p-3 rounded-xl border transition-all ${
+                    judgeStep === 3
+                      ? "bg-blue-50/50 border-blue-300 shadow-xs"
+                      : "bg-slate-50/60 border-slate-200 opacity-70"
+                  }`}
+                >
+                  <div className="flex justify-between items-center text-xs mb-1">
+                    <span className="font-bold text-slate-800">3. predictEntityKey</span>
+                    <span className="text-[10px] font-mono text-blue-700">zkTLS Settle</span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 mb-2.5">
+                    Compute Poseidon nullifier, predict key, and settle trade atomically.
+                  </p>
+                  <button
+                    onClick={handleJudgeStep3}
+                    disabled={judgeStep !== 3}
+                    className="w-full py-1.5 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs disabled:opacity-40 transition-all"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Generate ZK Proof & Settle</span>
+                  </button>
+                </div>
+              </div>
+
+              {judgeStatusMsg && (
+                <div className="mt-3 p-2 bg-slate-50 rounded-lg border border-slate-200 text-xs font-mono text-slate-700 flex items-center justify-between">
+                  <span>{judgeStatusMsg}</span>
+                  {judgeDemoOrder && (
+                    <button
+                      onClick={() => setInspectedEntity(judgeDemoOrder)}
+                      className="text-emerald-600 font-bold hover:underline flex items-center gap-1 text-[11px]"
+                    >
+                      Inspect Raw Entity
+                      <ExternalLink className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Core Grid: Chart (Left) + OrderBook (Middle) + Trade Panel (Right) */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+            {/* Left Area: Price Chart (7 cols) */}
+            <div className="lg:col-span-6 xl:col-span-6">
+              <PriceChart />
+            </div>
+
+            {/* Middle Area: Order Book Terminal (3 cols) */}
+            <div className="lg:col-span-3 xl:col-span-3">
+              <OrderBookTerminal
+                orders={orders}
+                onSelectPrice={(p) => setSelectedBookPrice(p)}
+                onSelectOrder={(o) => setOrderToLock(o)}
+              />
+            </div>
+
+            {/* Right Area: Trade Execution Panel (3 cols) */}
+            <div className="lg:col-span-3 xl:col-span-3">
+              <TradeExecutionPanel
+                onPostOrder={handlePostOrder}
+                walletAddress={walletAccount?.address || ""}
+                isSubmitting={isSubmitting}
+                selectedPrice={selectedBookPrice}
+              />
+            </div>
+          </div>
+
+          {/* Bottom Area: Active Orders & History Table */}
+          <div className="w-full">
+            <LiveOrderbook
+              orders={orders}
+              isLoading={isLoading}
+              onRefresh={fetchOrders}
+              onSelectOrderToLock={(order) => setOrderToLock(order)}
+              onInspectEntity={(order) => setInspectedEntity(order)}
+            />
+          </div>
+
+          {/* Footer matching reference image */}
+          <footer className="pt-6 pb-4 border-t border-slate-200 flex flex-wrap items-center justify-between gap-4 text-xs text-slate-400">
+            <div className="flex items-center gap-4">
+              <a href="#" className="hover:text-slate-600 transition-colors">Terms & Conditions</a>
+              <span>|</span>
+              <a href="#" className="hover:text-slate-600 transition-colors">Privacy Policy</a>
+              <span>|</span>
+              <a href="https://docs.arkiv.network" target="_blank" rel="noreferrer" className="hover:text-slate-600 transition-colors">Support & Docs</a>
+            </div>
+            <div>
+              © 2026 zkUPI-Arkiv — All rights reserved. Powered by Arkiv DB-Chain & Golem Network.
+            </div>
+          </footer>
+        </div>
+      </div>
 
       {/* Modals & Drawers */}
-      <CreateOrderModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-        onSubmit={handleCreateOrder}
-        makerAddress={burnerAccount?.address || ""}
-      />
-
       <ZkSettlementModal
         isOpen={!!orderToLock}
         onClose={() => setOrderToLock(null)}
         order={orderToLock}
-        takerAddress={burnerAccount?.address || ""}
+        takerAddress={walletAccount?.address || ""}
         onLockOrder={handleLockOrder}
         onSettleOrder={handleSettleOrder}
       />
