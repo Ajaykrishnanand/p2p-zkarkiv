@@ -10,10 +10,10 @@
 | Field | Detail |
 | :--- | :--- |
 | **Project Name** | **zkUPI-Arkiv** |
-| **One-Line Pitch** | The world's first zero-knowledge, censorship-resistant P2P orderbook bringing India's 18B monthly UPI payments to Web3 without storing a single byte of real PII or leaking bank statements. |
+| **Core Flow** | **Maker creates Sell Order $\rightarrow$ Funds locked in 30-min Escrow $\rightarrow$ Buyer pays via UPI Mobile Simulator $\rightarrow$ zkTLS proves payment success authentically from banking app $\rightarrow$ Escrow verifies proof & releases crypto.** |
 | **Target Tracks** | 🏆 **Best Indian Use Case** ($2,000 USDC + Devcon 8 Ticket)<br>🛡️ **Censorship Resistance** ($750 USDC + Devcon 8 Ticket)<br>🔒 **Privacy** ($750 USDC + Devcon 8 Ticket) |
-| **Primary Network** | **Arkiv Tiramisu Testnet** (Chain ID: `7738577`) |
-| **Settlement Escrow** | **Base Sepolia Testnet** (Chain ID: `84532`) |
+| **Primary Orderbook Network** | **Arkiv Tiramisu Testnet** (Chain ID: `7738577`) |
+| **Collateral Escrow Network** | **Base Sepolia Testnet** (Chain ID: `84532`) |
 | **Core SDK** | `@arkiv-network/sdk` v0.8.1 |
 | **GitHub Repository** | [github.com/Ajaykrishnanand/p2p-zkarkiv](https://github.com/Ajaykrishnanand/p2p-zkarkiv) |
 | **Arkiv Explorer** | [tiramisu.explorer.arkiv.network](https://tiramisu.explorer.arkiv.network) |
@@ -33,16 +33,16 @@
 # Slide 1: The Hook — India's P2P Crisis
 
 ### Headline:
-**18 Billion UPI Transactions Every Month. Yet Indian Crypto Traders Are Getting Their Bank Accounts Frozen.**
+**18 Billion UPI Payments Monthly. Yet Indian Crypto Traders Face Bank Account Freezes & Statement Leaks.**
 
-### Bullet Points:
-* **The Massive Volume:** Unified Payments Interface (UPI) handles **>18 Billion transactions every month** (~$250B+ volume), making India the world leader in real-time retail payments.
-* **The Fatal Danger:** On centralized P2P desks (Binance P2P, local exchanges), malicious actors and bots scrape open merchant VPAs. If a fraudulent payment touches a chain of accounts, **cybercrime police freeze every bank account in the lineage** via statutory cyber liens.
-* **The Privacy Nightmare:** When P2P disputes arise, centralized platforms force users to upload raw bank statement PDFs and unredacted screenshots. Lifetime account balances, home addresses, and confidential banking histories are exposed to third-party admins and vulnerable databases.
-* **Platform Censorship:** Centralized P2P engines censor users without recourse, freeze assets, and suffer from database honeypot leaks.
+### Key Realities:
+* **The Scale:** India’s Unified Payments Interface (UPI) processes over **18 Billion transactions every month** (~$250B+ retail volume). It is the world’s most successful instant payment network.
+* **The P2P Freeze Trap:** On centralized P2P desks (Binance, Bybit, local platforms), crypto sellers post their real UPI IDs. When fraudulent funds enter a chain of transactions, Indian cybercrime police order statutory **liens and freeze every bank account in the lineage**.
+* **The Privacy Violation:** When disputes occur, centralized platforms demand that users email raw bank statement PDFs and unredacted screenshots. Sensitive data—bank balances, transaction histories, home addresses—is exposed to third-party customer support desks.
+* **The Vulnerability:** Without cryptographic proof, sellers can claim "I never received the money," and buyers can forge screenshots in Photoshop.
 
 > **Speaker Notes:**  
-> *"Good morning judges. If you trade crypto in India today, you are playing Russian roulette with your bank account. Centralized P2P platforms have become honeypots for cybercrime freezes and PII harvesting. Innocent merchants wake up with frozen accounts simply because someone sent them UPI funds linked three hops away to a scam. And if there's a dispute, you are asked to email your entire bank statement PDF to a centralized support desk. We asked: Why can't we have a decentralized orderbook where no bank statement is ever uploaded, no real UPI ID is ever scraped, and no centralized server can ever censor your trades? That is zkUPI-Arkiv."*
+> *"Good morning judges. If you sell or buy crypto with UPI in India today, you are risking an immediate cybercrime freeze on your bank account. Centralized exchanges force you to share real UPI IDs and email full bank statement PDFs whenever there's a dispute. Why can't we have a peer-to-peer exchange where the seller creates a sell order, the funds are safely locked in smart contract escrow for 30 minutes, the buyer pays directly using their UPI mobile app, and client-side zkTLS cryptographically proves that the payment succeeded directly from the bank without leaking a single private line of your bank statement? That is zkUPI-Arkiv."*
 
 ---
 
@@ -53,24 +53,23 @@
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
-# Slide 2: Why Existing Decentralized Architectures Fail
+# Slide 2: Why Existing Decentralized Tech Stacks Fail
 
 ### Headline:
-**Centralized Databases Break Censorship. IPFS and Subgraphs Break P2P Trading. Arkiv DB-Chain Solves Both.**
+**Centralized Databases Break Censorship. IPFS Cannot Lock State for 30 Minutes. Arkiv DB-Chain Solves Both.**
 
-### Architecture Shootout Matrix:
+### Architecture Comparison Matrix:
 
-| Feature / Requirement | PostgreSQL / Firebase | IPFS / Arweave | Ethereum Subgraph | **Arkiv DB-Chain (`@arkiv-network/sdk`)** |
+| Feature / Requirement | Centralized DB (Postgres/Firebase) | Decentralized Storage (IPFS/Arweave) | L1/L2 Calldata (Ethereum) | **zkUPI on Arkiv DB-Chain (`@arkiv-network/sdk`)** |
 | :--- | :---: | :---: | :---: | :---: |
-| **Censorship Resistance** | ❌ Blockable single host | ✅ Fully decentralized | ✅ Decentralized | **✅ Decentralized validator chain** |
-| **Zero PII Honeypot** | ❌ Admin database leak | ⚠️ Plaintext public blob | ❌ Public calldata | **✅ 100% Synthetic Alias Protocol Guard** |
-| **Indexed Query Filtering** | ✅ Fast SQL queries | ❌ Cannot query `status == "OPEN"` | ⚠️ Read-only indexer | **✅ Native indexers (`eq`, `lte`, `and`)** |
-| **State Mutation (`OPEN` $\rightarrow$ `LOCKED`)** | ✅ Mutable records | ❌ Immutable static blobs | ❌ Requires costly EVM txs | **✅ Atomic `patchEntity` mutations** |
-| **Auto-Expiring Quotes (TTL)** | ⚠️ Manual cron cleanup | ❌ Permanent garbage accumulation | ❌ Complex contract bookkeeping | **✅ Native `ExpirationTime` auto-pruning** |
-| **Deterministic Nullifier Registry** | ❌ Admin controlled | ❌ Inefficient lookup | ⚠️ Heavy EVM gas storage | **✅ Native `predictEntityKey`** |
+| **Censorship Resistance** | ❌ Single server easily blocked/frozen | ✅ Decentralized | ✅ Decentralized | **✅ Decentralized validator chain** |
+| **Zero-PII Storage** | ❌ Plaintext database leak | ⚠️ Public permanent blob | ❌ Public calldata leak | **✅ 100% Synthetic Alias Protocol Guard** |
+| **Ephemeral 30-Min Lock Window** | ⚠️ Relies on centralized cron | ❌ Immutable; cannot expire state | ❌ Heavy EVM gas storage | **✅ Native `ExpirationTime.fromMinutes(30)`** |
+| **Order State Mutation (`OPEN` $\rightarrow$ `LOCKED` $\rightarrow$ `SETTLED`)** | ✅ Mutable records | ❌ Static blobs; cannot mutate in-place | ❌ Costly contract transactions | **✅ Atomic `patchEntity` mutations** |
+| **Double-Spend Prevention (Nullifiers)** | ❌ Single database lookup | ❌ Inefficient global lookup | ⚠️ High EVM gas per trade | **✅ Native `predictEntityKey` deterministic lookup** |
 
 > **Speaker Notes:**  
-> *"To build a real decentralized P2P orderbook, you need fast queries, ephemeral state, and mutations. If you use Postgres, authorities can shut down your database in 10 minutes. If you use IPFS, you cannot query 'show me all orders with rate under 88 rupees', and you cannot update an order when a buyer locks it. If you use Ethereum smart contracts for every 15-minute orderbook quote, gas costs will bankrupt the users. Arkiv is the missing primitive: a native decentralized database chain that gives us indexed queries, atomic state mutations, and automatic TTL expiration without smart contract deployment overhead."*
+> *"To build an escrowed P2P orderbook, you need fast queries, ephemeral locks, and state transitions. If you use Postgres, a court order can shut down your database in 10 minutes. If you use IPFS, you cannot mutate an order from OPEN to LOCKED, nor can you give it an automatic 30-minute expiration countdown. If you put every 15-minute quote on Ethereum, gas fees destroy the economics. Arkiv DB-Chain provides the native decentralized database primitives: indexed queries, atomic state mutations via patchEntity, and automatic TTL expiration."*
 
 ---
 
@@ -81,41 +80,54 @@
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
-# Slide 3: The zkUPI-Arkiv Innovation
+# Slide 3: The 4-Step zkUPI-Arkiv Lifecycle
 
 ### Headline:
-**Zero Real PII on Arkiv. Zero Bank Screenshots Uploaded. Cryptographic Settlement Guaranteed.**
-
-### 3 Core Pillars:
+**Sell Order $\rightarrow$ 30-Min Escrow Lock $\rightarrow$ UPI Simulator Pay $\rightarrow$ zkTLS Provenance Proof $\rightarrow$ Escrow Release.**
 
 ```
-               ┌──────────────────────────────────────────────┐
-               │              zkUPI-Arkiv Engine              │
-               └──────────────────────┬───────────────────────┘
-                                      │
-         ┌────────────────────────────┼────────────────────────────┐
-         ▼                            ▼                            ▼
-   1. ZERO-PII GUARD          2. zkTLS PAYMENT PROOFS       3. ARKIV DB-CHAIN
-• Strict regex rejection   • TLS 1.3 Notarization       • Indexed attributes
-• Synthetic routing:       • Client-side Groth16        • Ephemeral TTLs (15-60m)
-  `*.synth@*` only         • Redacted account balances  • Atomic state machine
-• No real phone numbers    • Poseidon UTR Nullifiers    • Deterministic nullifiers
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                                 THE CORE FLOW                                                          │
+│                                                                                                                        │
+│   [ 1. MAKER: SELL ORDER ]             [ 2. 30-MIN ESCROW LOCK ]              [ 3. TAKER: UPI SIMULATOR ]              │
+│   • Maker deposits USDC to Escrow      • Taker locks order on Arkiv           • Taker selects bank & enters PIN        │
+│   • Posts rate, amount & synth alias   • Escrow funds locked for 30 mins      • Payment routed via NPCI switch         │
+│   • Broadcasts `createEntity`          • Status mutates to `LOCKED`           • Generates bank receipt with UTR        │
+│                    │                                   │                                      │                        │
+│                    └───────────────────────────────────┼──────────────────────────────────────┘                        │
+│                                                        ▼                                                               │
+│                                        [ 4. zkTLS PROOF & ESCROW RELEASE ]                                             │
+│                                        • Client notarizes TLS 1.3 banking session                                      │
+│                                        • Private bank balance & account number 100% REDACTED                           │
+│                                        • Groth16 proof + Poseidon Nullifier verified by Escrow                         │
+│                                        • Locked USDC automatically released to Taker!                                  │
+└────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-1. **100% Synthetic Zero-PII Protocol Guard (`src/lib/syntheticGuard.ts`)**:
-   - Strictly enforces that only synthetic aliases (e.g. `arjun.synth@okhdfc`, `priya.demo@okaxis`) ever touch Arkiv.
-   - Any attempt to submit a genuine 10-digit Indian phone number or unapproved VPA pattern is blocked at the protocol layer before transaction broadcast.
-2. **Zero-Screenshot zkTLS Payment Proofs (`src/lib/zkTlsProver.ts`)**:
-   - Rather than uploading a forged screenshot or leaking bank statements, the buyer's client notarizes the bank's direct HTTPS TLS 1.3 session.
-   - Computes a client-side Groth16 proof:
-     $$\text{BankStatus} == \text{"SUCCESS"} \land \text{Amount} == \text{Order.amountInr} \land \text{Nullifier} == H(\text{secret}, \text{syntheticUtr})$$
-   - Confidential fields (payer balance, bank account number, real name) are **permanently redacted in ephemeral browser memory**.
-3. **Deterministic Double-Spend Prevention (`predictEntityKey`)**:
-   - Prevents replay attacks where a buyer tries to claim multiple orders with the same UPI payment receipt.
-   - Computes deterministic entity keys on Arkiv; duplicate nullifier registrations immediately fail.
+### Detailed Breakdown of the Steps:
+
+1. **Maker Creates Sell Order with Escrow Deposit:**
+   - The seller (Maker) deposits USDC collateral into the **Base Sepolia Escrow Contract**.
+   - The maker posts an order to **Arkiv DB-Chain** (`createEntity`) indexed by rate and INR amount with a synthetic payee alias (e.g. `merchant01.synth@okhdfc`). No real phone number or personal bank details are stored.
+
+2. **30-Minute Ephemeral Escrow Lock:**
+   - When a buyer (Taker) accepts the quote, Arkiv DB-Chain mutates the order status to `LOCKED` via `patchEntity` with `ExpirationTime.fromMinutes(30)`.
+   - The escrowed USDC is reserved exclusively for the buyer for **30 minutes**.
+   - If the buyer fails to pay within 30 minutes, the lock auto-expires, and the seller can safely reclaim or relist the collateral.
+
+3. **Buyer Pays via UPI Mobile Simulator:**
+   - The buyer opens the **Interactive UPI Mobile Simulator** (Google Pay, PhonePe, Paytm, or BHIM UPI).
+   - The buyer selects their bank, enters their 6-digit UPI PIN, and authorizes the transaction.
+   - The simulator routes the payment through the simulated banking rails / NPCI switch, generating an authentic 12-digit UTR bank reference.
+
+4. **zkTLS Cryptographic Attestation & Escrow Release:**
+   - The client-side **zkTLS Notary Enclave** captures the TLS 1.3 session with the bank server (`api.retail.hdfcbank.com:443`).
+   - Private personal data (bank account number, full statement, balance, PIN) is **redacted and blinded**.
+   - A **Groth16 Zero-Knowledge SNARK proof** and **Poseidon nullifier** are submitted to Arkiv and verified by the escrow contract.
+   - The escrow contract verifies proof authenticity and **instantly releases the locked USDC to the buyer's wallet**!
 
 > **Speaker Notes:**  
-> *"Here is how we answer the toughest question in Indian P2P: 'Doesn't the receiver see my bank account anyway?' Yes! When you pay someone via UPI, their banking app shows a credit. But here is the critical difference: Neither the public blockchain, nor scraping bots, nor centralized exchange admins ever see your bank balance, account number, or statement PDF. The world only sees a zero-knowledge cryptographic proof that the order was paid."*
+> *"Here is the complete user journey: The seller deposits USDC into smart contract escrow and lists an order on Arkiv. The buyer locks the trade, which holds the funds in escrow for a strict 30-minute window. The buyer uses their UPI app to pay the seller directly. As soon as the bank approves the transfer, our zkTLS engine cryptographically proves the payment receipt directly from the bank's TLS session. Private bank balances and account numbers are completely redacted. The escrow verifies the proof and instantly unlocks the crypto to the buyer. Zero human middlemen, zero bank statement uploads, zero dispute arbiters."*
 
 ---
 
@@ -126,34 +138,48 @@
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
-# Slide 4: End-to-End Architecture Flow
+# Slide 4: End-to-End Sequence Architecture
 
-### System Architecture Diagram:
+### Sequence Diagram:
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Maker as Maker (USDC Seller)
+    actor Maker as Maker (Crypto Seller)
+    participant Escrow as Base Sepolia Escrow Contract
     participant Arkiv as Arkiv DB-Chain (Tiramisu 7738577)
-    participant Base as Base Sepolia Escrow (84532)
-    actor Taker as Taker (INR Buyer)
-    participant Bank as Indian Banking Rails / UPI Switch
-    participant Prover as Client zkTLS Enclave
+    actor Taker as Taker (Fiat Buyer)
+    participant Phone as UPI Mobile Simulator (GPay/PhonePe)
+    participant Bank as Bank Server (TLS 1.3)
+    participant zkTLS as Client zkTLS Enclave
 
-    Maker->>Base: 1. Deposit Collateral USDC (depositEscrow)
-    Maker->>Arkiv: 2. createEntity: OPEN Order (60m TTL, indexed rate & amount)
-    Taker->>Arkiv: 3. patchEntity: LOCKED (30m Ephemeral Lock)
-    Taker->>Bank: 4. Pay INR via UPI App (GPay/PhonePe/Paytm with PIN)
-    Bank-->>Taker: 5. Return Signed TLS 1.3 Banking Response + UTR
-    Taker->>Prover: 6. Redact PII + Generate Groth16 Proof + Poseidon Nullifier
-    Prover-->>Taker: 7. ZK Proof Bundle (Zero Bank Statement Leaks)
-    Taker->>Arkiv: 8. predictEntityKey & createEntity(utr_nullifier)
-    Taker->>Arkiv: 9. patchEntity: SETTLED (zkVerified: true, 7-day TTL)
-    Arkiv-->>Base: 10. settleEscrowWithZkProof: Release USDC to Taker
+    Note over Maker,Escrow: Step 1: Collateral & Order Creation
+    Maker->>Escrow: depositEscrow(orderId, usdcAmount)
+    Maker->>Arkiv: createEntity: OPEN Sell Order (rate: ₹87.5, synthAlias: "merchant01.synth@okhdfc")
+
+    Note over Taker,Arkiv: Step 2: 30-Minute Fund Lock
+    Taker->>Arkiv: patchEntity: status = LOCKED (expires: 30 mins)
+    Arkiv-->>Escrow: Funds locked exclusively for Taker
+
+    Note over Taker,Bank: Step 3: UPI Mobile Payment
+    Taker->>Phone: Select Bank, Enter 6-Digit PIN & Authorize
+    Phone->>Bank: Execute UPI Payment Request via NPCI Switch
+    Bank-->>Phone: Return Payment Success (Status: "00", UTR: "240918739182")
+
+    Note over Taker,zkTLS: Step 4: zkTLS Proof & Redaction
+    Phone->>zkTLS: Notarize TLS 1.3 Session Transcript
+    zkTLS->>zkTLS: Redact Account Balance & Account Number
+    zkTLS->>zkTLS: Generate Groth16 Proof + Poseidon Nullifier H(secret, UTR)
+
+    Note over Taker,Escrow: Step 5: Verification & Crypto Release
+    Taker->>Arkiv: patchEntity: status = SETTLED (zkVerified: true)
+    Taker->>Escrow: settleEscrowWithZkProof(orderId, nullifierHash, zkProof)
+    Escrow->>Escrow: Verify ZK Proof & Ensure Nullifier Unused
+    Escrow-->>Taker: Release Collateral USDC to Taker Wallet!
 ```
 
 > **Speaker Notes:**  
-> *"Notice the elegance of this flow. The maker deposits USDC into escrow on Base Sepolia and registers the liquidity quote on Arkiv DB-Chain. When the taker locks the order, Arkiv mutates the state to LOCKED with a 30-minute countdown. The taker pays via standard UPI, client-side zkTLS generates the proof, the deterministic nullifier is registered on Arkiv to prevent double-spends, and the order is marked SETTLED. Zero PII, zero centralized databases, and instant cryptographic settlement."*
+> *"Follow the numbers on this sequence diagram. At step 1, the seller deposits USDC and posts a quote on Arkiv. At step 3, the buyer locks it—giving them 30 minutes of exclusivity. At step 4, the buyer pays through the UPI app. At steps 6 and 7, the client-side zkTLS enclave notarizes the HTTPS response from the bank and blinds all sensitive account numbers. At step 10, the Base Sepolia Escrow contract cryptographically verifies the proof, checks that the UTR nullifier has never been used before, and automatically transfers the USDC to the buyer. If the buyer never pays, step 3 expires after 30 minutes, and the seller safely recovers their deposit."*
 
 ---
 
@@ -164,10 +190,10 @@ sequenceDiagram
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
-# Slide 5: Deep Implementation of 5 Core Arkiv Features
+# Slide 5: Deep Implementation of 5 Core Arkiv SDK Features
 
-### 1. `createEntity` with Indexed Attributes & Content-Type
-Posts liquidity indexed by `appId`, `entityType`, `status`, `fiatCurrency`, `amountInr`, `rate`, and `zkVerified`:
+### 1. `createEntity` with Composable Indexed Attributes
+Stores the maker’s sell order with indexed attributes (`appId`, `entityType`, `status`, `fiatCurrency`, `amountInr`, `rate`, `zkVerified`) enabling instant orderbook matching:
 ```ts
 const tx = await walletClient.createEntity({
   attributes: {
@@ -179,19 +205,38 @@ const tx = await walletClient.createEntity({
     rate: u256(87n),
     zkVerified: bool(false),
   },
-  payload: jsonToPayload({ orderId: "ORD-9128", usdcAmount: "57.47", syntheticUpiAlias: "arjun.synth@okhdfc" }),
+  payload: jsonToPayload({
+    orderId: "ORD-9128",
+    usdcAmount: "57.14",
+    syntheticUpiAlias: "merchant01.synth@okhdfc",
+  }),
   contentType: "application/json",
   expires: ExpirationTime.fromMinutes(60),
 });
 ```
 
-### 2. `ExpirationTime` (Self-Pruning Orderbook Lifecycle)
-* **On `OPEN` (60 min):** Liquidity orders self-expire so stale FX quotes never sit on the orderbook.
-* **On `LOCKED` (30 min):** Creates an ephemeral lock window for the buyer to transfer UPI fiat.
-* **On `SETTLED` (7 days):** Keeps settled orders for 7 days for post-trade auditability before automated storage reclamation.
+### 2. `ExpirationTime` (The 30-Minute Ephemeral Lock Primitive)
+* **On `OPEN` (60 min):** Order automatically expires if unfulfilled, preventing stale FX quotes.
+* **On `LOCKED` (30 min):** When a taker commits to buy, the order expiration is updated to **30 minutes**. If payment and zkTLS proof are not submitted within 30 minutes, Arkiv marks the order expired and the escrow releases collateral back to the maker.
+* **On `SETTLED` (7 days):** Retains settled trade records for 7 days for auditability before automatic garbage collection.
 
-### 3. `predictEntityKey` (Deterministic Replay Prevention)
-Derives the exact 32-byte hexadecimal entity key of the nullifier receipt ahead of time to guarantee that a synthetic UTR cannot be spent twice:
+### 3. `patchEntity` (Atomic In-Place State Transitions)
+Mutates order status from `OPEN` $\rightarrow$ `LOCKED` $\rightarrow$ `SETTLED` in-place on Arkiv without generating redundant entity keys:
+```ts
+await walletClient.patchEntity({
+  key: orderEntityKey,
+  attributes: {
+    status: str("SETTLED"),
+    zkVerified: bool(true),
+  },
+  payload: jsonToPayload({ ...orderPayload, settledAt: new Date().toISOString() }),
+  contentType: "application/json",
+  expires: ExpirationTime.fromDays(7),
+});
+```
+
+### 4. `predictEntityKey` (Deterministic Nullifier Replay Defense)
+Computes the exact 32-byte hexadecimal entity key of the payment nullifier ahead of time:
 ```ts
 const predictedNullifierKey = predictEntityKey({
   owner: takerAddress,
@@ -200,106 +245,123 @@ const predictedNullifierKey = predictEntityKey({
   chainId: TIRAMISU_CHAIN_ID,
 });
 ```
+If a malicious buyer attempts to submit the same bank payment receipt for a second order, Arkiv and the escrow contract reject it because the deterministic nullifier already exists.
 
-### 4. `patchEntity` (Atomic State Machine)
-Mutates order status from `OPEN` $\rightarrow$ `LOCKED` $\rightarrow$ `SETTLED` in-place without generating new entity keys:
-```ts
-await walletClient.patchEntity({
-  key: orderEntityKey,
-  attributes: { status: str("SETTLED"), zkVerified: bool(true) },
-  payload: jsonToPayload({ ...orderPayload, settledAt: new Date().toISOString() }),
-  contentType: "application/json",
-  expires: ExpirationTime.fromDays(7),
-});
-```
-
-### 5. `query(filter)` and Real-Time Hybrid Orderbook Sync
-Queries active orders directly from Arkiv validator nodes using composable boolean filters:
+### 5. `query(filter)` & Real-Time WebSocket Streaming
+Queries open orders using multi-attribute boolean filters:
 ```ts
 const filter = and(
   eq("appId", str("zkupi-arkiv-v1")),
   eq("entityType", str("p2p_order")),
   eq("fiatCurrency", str("INR")),
-  lte("rate", u256(88n))
+  eq("status", str("OPEN"))
 );
 const { entities } = await publicClient.query(filter);
 ```
+Coupled with Arkiv WebSocket streams (`wsPublicClient`) to refresh the orderbook immediately whenever a new block is mined.
 
 > **Speaker Notes:**  
-> *"We didn't just use Arkiv as a static blob store. We leveraged every advanced capability of SDK 0.8.1: indexed attributes for range queries, ExpirationTime for dynamic quote pruning, predictEntityKey for deterministic nullifier lookup, patchEntity for zero-gas state mutation, and composable query filters for order matching."*
+> *"Notice how the 30-minute lock is implemented: when the buyer commits, we call patchEntity with ExpirationTime.fromMinutes(30). Arkiv handles the countdown natively. We don't need centralized cron jobs or expensive timer smart contracts."*
 
 ---
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
 │                               SLIDE 6                                  │
-│                     45-SECOND JUDGE EVALUATION                         │
+│                     THE UPI MOBILE SIMULATOR                           │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
-# Slide 6: The 45-Second Judge Evaluation Flow
+# Slide 6: The UPI Mobile Simulator & zkTLS Prover
 
 ### Headline:
-**Designed for Hackathon Judges: Test the Entire Lifecycle in 3 Clicks Without Indian Bank Accounts or Faucet Gas.**
+**Interactive Mobile Phone Mockup: Prove Payment Success Data Directly from Authentic Banking Apps.**
 
 ```
-┌────────────────────────────────────────────────────────────────────────────────────────┐
-│                        1-CLICK JUDGE EVALUATION CONTROL BAR                            │
-│  [1. Post Order on Arkiv]  ──▶  [2. Lock Order (Buyer)]  ──▶  [3. zkTLS Pay & Settle] │
-└────────────────────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────┐      ┌─────────────────────────────────────────────────────────────────────────┐
+│     SMARTPHONE VIEWPORT          │      │                 zkTLS CRYPTOGRAPHIC PROVENANCE SUITE                    │
+│  ┌────────────────────────────┐  │      │                                                                         │
+│  │ 9:41              5G [98%] │  │      │  1. Server TLS 1.3 Attestation:                                         │
+│  │ Google Pay                 │  │      │     • Host: api.retail.hdfcbank.com:443                                 │
+│  │                            │  │      │     • Notary: zkTLS-Notary-Cluster-v1                                   │
+│  │ Recipient:                 │  │      │     • Bank X.509 Subject: CN=HDFC Bank, O=NPCI Member                   │
+│  │ merchant01.synth@okhdfc    │  │      │     • Signature: 0x6f91cb... (ECDSA verified)                           │
+│  │                            │  │      │                                                                         │
+│  │ Amount: ₹5,000 INR         │  │      │  2. Zero-PII Selective Redaction:                                       │
+│  │ Bank: HDFC Bank •••• 4921  │  │      │     • Publicly Proven: Status "SUCCESS", Amount ₹5000, UTR, Payee       │
+│  │                            │  │      │     • Blinded by ZK: Account No [REDACTED], Balance [REDACTED], KYC Name │
+│  │ [ Enter 6-Digit PIN: ••• ] │  │      │                                                                         │
+│  │ [ Pay ₹5,000 via GPay ➔ ]  │  │      │  3. Groth16 SNARK Proof & Nullifier:                                    │
+│  │                            │  │      │     • Poseidon Nullifier: 0x9812bf...                                   │
+│  │ Status: SUCCESS!           │  │      │     • Groth16 Digest: 0x3ab82c...                                       │
+│  │ UTR: 240918739182          │  │      │     • [ ✔ Verify Provenance Authenticity: 5/5 CHECKS PASSED ]           │
+│  └────────────────────────────┘  │      │                                                                         │
+└──────────────────────────────────┘      └─────────────────────────────────────────────────────────────────────────┘
 ```
 
-1. **Step 1: Post INR Order (`createEntity` + 60m TTL)**
-   - Pre-fills ₹5,000 INR at ₹87 / USDC with synthetic alias `arjun.synth@okhdfc`.
-   - 1-click writes to Arkiv Tiramisu and displays the live 32-byte hexadecimal `entityKey`.
-2. **Step 2: Lock Order (`patchEntity` + 30m Ephemeral TTL)**
-   - Mutates entity status to `LOCKED` and resets expiration to 30 minutes.
-3. **Step 3: UPI Simulator & zkTLS Settlement (`predictEntityKey` + `patchEntity`)**
-   - Launches interactive smartphone UPI terminal (GPay/PhonePe/Paytm/BHIM).
-   - Enter 6-digit PIN $\rightarrow$ computes simulated TLS 1.3 handshake.
-   - Computes Poseidon nullifier, deterministically registers entity, patches order to `SETTLED` (`zkVerified: true`), and links BaseScan escrow release.
-4. **Live Raw Entity Inspector:**
-   - Every card has a **"Raw Entity"** button opening a slide-out drawer revealing raw indexed attributes, decoded JSON payload, and remaining TTL countdown.
+### Highlights of the Simulator:
+1. **Multi-App Experience:** Toggle between **Google Pay**, **PhonePe**, **Paytm**, and **BHIM UPI**.
+2. **Authentic PIN Entry:** Interactive virtual keypad with masked PIN dots and quick autofill.
+3. **zkTLS Provenance Attestation:** Directly inspects the notarized TLS 1.3 handshake with `api.retail.hdfcbank.com`.
+4. **Selective Redaction:** Proves that the payment succeeded while keeping account numbers and balances completely hidden.
+5. **Interactive Verifier:** 1-click verification testing all 5 cryptographic conditions (TLS signature, notary attestation, amount match, nullifier hygiene, zero-PII compliance).
 
 > **Speaker Notes:**  
-> *"Judges, we know you have limited time. We built a dedicated 1-Click Judge Mode right at the top of the screen. You don't need testnet gas, you don't need MetaMask, and you don't need an Indian bank account. You click Step 1 to post, Step 2 to lock, and Step 3 to experience the UPI payment and zkTLS proof generation. You can inspect the raw Arkiv hexadecimal entity keys live on-chain."*
+> *"We built an authentic smartphone simulator right inside the web app. Judges can switch between GPay, PhonePe, Paytm, and BHIM, enter their PIN, execute the payment, and watch the zkTLS prover notarize the banking session. On the right panel, you can inspect the raw TLS handshake and see how the account balance and account number are blinded before the Groth16 proof is verified."*
 
 ---
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
 │                               SLIDE 7                                  │
-│                     CROSS-CHAIN ESCROW ON BASE                         │
+│                     CROSS-CHAIN ESCROW SECURITY                        │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
 # Slide 7: Cross-Chain Escrow Security Architecture
 
 ### Headline:
-**Dual-Chain Harmony: Arkiv Handles High-Frequency Orderbook State; Base Sepolia Handles Collateralized USDC Escrow.**
+**Separation of Concerns: Arkiv Manages High-Speed State; Base Sepolia Secures Collateral.**
 
-### Smart Contract: `contracts/BaseSepoliaEscrow.sol`
-
+### Smart Contract Interface: `contracts/BaseSepoliaEscrow.sol`
 ```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 contract P2PBaseSepoliaEscrow {
     IERC20 public immutable usdcToken;
-    mapping(bytes32 => EscrowDeposit) public escrows;
-    mapping(bytes32 => bool) public usedNullifiers; // Replay protection
+    
+    struct EscrowDeposit {
+        address maker;
+        address taker;
+        uint256 usdcAmount;
+        uint256 amountInr;
+        uint256 lockTimestamp;
+        uint256 lockDuration; // 30 minutes (1800 seconds)
+        bool isLocked;
+        bool isSettled;
+    }
 
-    function depositEscrow(bytes32 orderId, uint256 usdcAmount, uint256 amountInr, bytes32 arkivEntityKey) external;
-    function lockEscrow(bytes32 orderId, address taker, uint256 ttlSeconds) external;
+    mapping(bytes32 => EscrowDeposit) public escrows;
+    mapping(bytes32 => bool) public usedNullifiers; // Double-spend prevention
+
+    function depositEscrow(bytes32 orderId, uint256 usdcAmount, uint256 amountInr) external;
+    function lockEscrow(bytes32 orderId, address taker) external;
     function settleEscrowWithZkProof(bytes32 orderId, bytes32 nullifierHash, bytes calldata zkProof) external;
-    function refundExpiredOrder(bytes32 orderId) external;
+    function refundExpiredOrder(bytes32 orderId) external; // 30-min timeout safety
 }
 ```
 
-### Security Guarantees:
-* **Double-Spend Prevention:** `usedNullifiers[nullifierHash]` prevents claiming escrow twice with the same UPI receipt.
-* **Timeout Protection:** If the buyer locks the order but fails to provide a valid zkTLS proof before lock expiry, the maker can call `refundExpiredOrder()` to safely retrieve collateral USDC.
-* **Separation of Concerns:** Heavy orderbook state is stored on Arkiv (0 gas costs for listing/locking); only the final collateral release touches Base Sepolia.
+### Key Security Invariants:
+1. **Collateral Lock Guarantee:** Once a taker locks the order, the maker cannot withdraw collateral for the duration of the 30-minute lock window.
+2. **Timeout Safety:** If 30 minutes elapse without a valid zkTLS proof from the taker, `refundExpiredOrder()` unlocks the funds back to the maker.
+3. **Replay Rejection:** `usedNullifiers[nullifierHash]` prevents claiming escrow twice with the same bank payment receipt.
+4. **Zero Custody:** Funds are never held by any exchange wallet or centralized entity.
 
 > **Speaker Notes:**  
-> *"Arkiv DB-Chain acts as the high-speed, censorship-resistant matching engine and ZK nullifier registry. Base Sepolia acts as the EVM liquidity vault holding Circle USDC. The two chains are cryptographically bound through the orderId and nullifierHash, creating a trustless bridge between off-chain fiat payments and on-chain crypto delivery."*
+> *"The escrow smart contract handles the collateral with mathematical rigor. When the order is locked, a 30-minute countdown starts. If the buyer presents the verified zkTLS proof, the USDC is released to the buyer. If the 30 minutes expire without proof, the seller calls refundExpiredOrder and gets their USDC back. Neither party can cheat."*
 
 ---
 
@@ -313,18 +375,18 @@ contract P2PBaseSepoliaEscrow {
 # Slide 8: Giving Back to Arkiv — Developer Friction Report
 
 ### Headline:
-**5 High-Value, Reproducible Feedback Points for the Arkiv Core Dev Team (`arkiv/friction.md`).**
+**5 High-Value, Actionable Feedback Points for the Arkiv Core Dev Team (`arkiv/friction.md`).**
 
-| Issue # | Topic | Severity | Our Hackathon Workaround | Recommendation for Arkiv Core Team |
-| :---: | :--- | :---: | :--- | :--- |
-| **1** | Groth16 Proof Bloat vs. RPC Latency | Medium | Stored 32-byte Poseidon commitments instead of 4KB unminified proofs | Add native payload compression flag: `jsonToPayload(d, { compress: true })` |
-| **2** | Runtime `InvalidAttributeNameError` | Low / DX | Standardized strict camelCase naming | Add TypeScript template literal type restriction on attribute keys |
-| **3** | WebSocket Connection Drops on Tab Sleep | Medium | Built hybrid sync hook pairing `watchEntityEvents` with 8s query poll | Expose auto-reconnect and heartbeat options in SDK client |
-| **4** | TOCTOU Race Condition on Nullifiers | Arch | Used `predictEntityKey` binding owner and nullifier nonce | Add native `unique: true` constraint on indexed attributes |
-| **5** | Mandatory `contentType` Requirement | DX | Created project-wide `CONTENT_TYPE_JSON` constant | Automatically default `contentType` to `"application/json"` when `jsonToPayload` is passed |
+| # | Topic | Severity | Our Implementation Workaround | Core Recommendation for Arkiv SDK Team |
+| :-: | :--- | :-: | :--- | :--- |
+| **1** | Groth16 Proof Bloat vs. RPC Latency | Medium | Stored 32-byte Poseidon commitments rather than 4KB unminified proof strings | Add native compression parameter: `jsonToPayload(d, { compress: true })` |
+| **2** | Runtime `InvalidAttributeNameError` | Low / DX | Standardized strict camelCase attribute names across the codebase | Add TypeScript template literal type restriction on attribute keys |
+| **3** | WebSocket Connection Drops on Tab Sleep | Medium | Built custom auto-reconnecting `useArkivWebSocket` hook paired with 8s query poll | Expose built-in auto-reconnect and ping/pong heartbeats in SDK client |
+| **4** | TOCTOU Race Condition on Nullifiers | Arch | Used `predictEntityKey` binding owner address and nullifier nonce | Add native `unique: true` constraint on indexed attributes |
+| **5** | Mandatory `contentType` Requirement | DX | Created centralized project constants for `"application/json"` | Automatically infer `contentType: "application/json"` when `jsonToPayload` is used |
 
 > **Speaker Notes:**  
-> *"A great hackathon project doesn't just build on an SDK; it helps the core team improve it. In our repository at arkiv/friction.md, we documented 5 deep technical friction points we uncovered while building on SDK 0.8.1, complete with code reproductions, workarounds, and architectural suggestions for the Arkiv engineering team."*
+> *"We wanted our hackathon work to directly benefit the Arkiv ecosystem. In our repository at arkiv/friction.md, we have provided 5 deep technical reports detailing developer friction points we encountered with SDK 0.8.1, including reproducible code snippets, our workarounds, and concrete recommendations for the core engineering team."*
 
 ---
 
@@ -338,52 +400,54 @@ contract P2PBaseSepoliaEscrow {
 # Slide 9: Target Prize Track Alignment
 
 ### 🏆 Track 1: Best Indian Use Case ($2,000 USDC + Devcon 8 Ticket)
-* **Real-World Impact:** Directly addresses the single greatest existential crisis for 15+ million Indian crypto traders: cybercrime bank freezes and malicious account liens.
-* **UPI-Native Design:** Bridges India's 18-billion-monthly-tx payment rails with Web3 without requiring banking intermediaries or centralized exchange accounts.
-* **100% Synthetic Compliance:** Respects privacy and legal regulations by enforcing zero PII on public ledgers.
+* **Real Crisis Solved:** Solves the #1 roadblock to Indian crypto adoption: bank account freezes and cybercrime liens resulting from centralized P2P trades.
+* **Native UPI Integration:** Seamlessly interfaces with India’s 18B monthly payment rails via mobile app simulation and banking TLS notarization.
+* **100% Synthetic Privacy:** Fully adheres to Indian privacy expectations by enforcing zero real phone numbers or bank account numbers on public ledgers.
 
 ### 🛡️ Track 2: Censorship Resistance ($750 USDC + Devcon 8 Ticket)
-* **Zero Single Point of Failure:** Eliminates centralized orderbook databases (Postgres/AWS) that authorities can block or subpoena.
-* **Decentralized State Machine:** Liquidity orders, status transitions, and audit records live on Arkiv DB-Chain validator nodes.
-* **Permissionless Burner Wallets:** No KYC gates or admin approval required to list or take orders.
+* **No Centralized Server:** Liquidity orders, status transitions, and audit records live entirely on decentralized Arkiv DB-Chain nodes.
+* **No Admin Killswitch:** Nobody can freeze an account, confiscate deposits, or shut down the orderbook.
+* **Permissionless Web3 Wallets:** Users connect directly with MetaMask—no KYC account registrations or exchange permissions required.
 
 ### 🔒 Track 3: Privacy ($750 USDC + Devcon 8 Ticket)
-* **Zero Real PII Guaranteed:** Real VPAs and 10-digit phone numbers are blocked at the protocol level.
-* **Zero-Screenshot Verification:** Replaces vulnerable bank statement PDF uploads with client-side zkTLS cryptographic proofs.
-* **Redacted Banking Enclave:** Bank balances, account numbers, and personal KYC names are permanently redacted before proof generation.
+* **Zero-Screenshot Verification:** Replaces vulnerable statement uploads with client-side zero-knowledge proofs.
+* **Blinded Banking Enclave:** Bank account numbers, remaining balances, and personal KYC names are permanently redacted before proof generation.
+* **Poseidon Nullifier Protection:** Prevents linkability and replay attacks across orders.
 
 > **Speaker Notes:**  
-> *"zkUPI-Arkiv hits the center of the bullseye for all three prize tracks: It solves the biggest crypto adoption problem in India, it removes every single point of censorship using Arkiv DB-Chain, and it pioneers zero-knowledge privacy for retail fiat-to-crypto trading."*
+> *"zkUPI-Arkiv hits the center of the bullseye for all three prize tracks: It tackles the biggest real-world crypto problem in India, operates without a single point of censorship using Arkiv DB-Chain, and pioneers zero-knowledge privacy for retail fiat-to-crypto trading."*
 
 ---
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
 │                               SLIDE 10                                 │
-│                     ROADMAP & CONCLUSION                               │
+│                     ROADMAP & LIVE DEMO LINKS                          │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
-# Slide 10: Roadmap & Vision
+# Slide 10: Roadmap & Conclusion
 
 ### Production Roadmap:
 ```
 Q1 2027: Testnet Alpha (Devcon 8 Mumbai) ──▶ Q2 2027: MPC zkTLS Notary Engine ──▶ Q3 2027: Multi-Fiat Global Expansion
 • Live on Arkiv Tiramisu & Base Sepolia     • Decentralized MPC Notary nodes       • Expand to THB (PromptPay),
-• 45-second judge demo flow                 • Integration with TLSNotary / Reclaim   IDR (QRIS), BRL (Pix), NGN (eNaira)
-• Complete Developer Friction Report        • Native Android / iOS PWA             • Smart Contract Escrow Audits
+• Interactive UPI Mobile Simulator          • Integration with TLSNotary / Reclaim   IDR (QRIS), BRL (Pix), NGN (eNaira)
+• Full Developer Friction Report            • Native Android / iOS PWA             • Smart Contract Escrow Audits
 ```
 
 ### Key Takeaways:
-1. **India's P2P Crisis is Solved:** No more bank account freezes from P2P trading.
-2. **Arkiv is the Perfect Engine:** Fast queries, mutable state, ephemeral TTLs, zero PII honeypots.
-3. **Try the Live App Today:** Accessible on laptop or mobile browser in under 45 seconds.
+1. **Maker creates a Sell Order** $\rightarrow$ Funds are securely held in **30-Minute Escrow Lock**.
+2. **Buyer pays via UPI Mobile Simulator** $\rightarrow$ Authenticated using 6-digit UPI PIN.
+3. **zkTLS notarizes payment success** $\rightarrow$ Proves authentic bank receipt with **zero private bank statement leaks**.
+4. **Escrow verifies cryptographic proof** $\rightarrow$ **USDC is automatically released to the buyer**.
 
-### Links & QR Codes:
-* **Live App:** [p2p-zkarkiv.vercel.app](http://localhost:3005)
+### Live Links:
+* **Live Web App:** [http://localhost:3005](http://localhost:3005)
 * **GitHub Repository:** [github.com/Ajaykrishnanand/p2p-zkarkiv](https://github.com/Ajaykrishnanand/p2p-zkarkiv)
 * **Arkiv Explorer:** [tiramisu.explorer.arkiv.network](https://tiramisu.explorer.arkiv.network)
 * **BaseScan Explorer:** [sepolia.basescan.org](https://sepolia.basescan.org)
+* **How-To-Use Guide:** [HOW_TO_USE.md](HOW_TO_USE.md)
 
 > **Speaker Notes:**  
-> *"Thank you judges. We invite you to open the app, click the 3-step judge flow, inspect the live Arkiv entity keys on Tiramisu, and join us in bringing safe, censorship-resistant P2P crypto trading to India and beyond. We are ready for your questions!"*
+> *"Thank you judges. We invite you to test the live app right now, try out the UPI mobile simulator, inspect the zkTLS proofs, and join us in bringing censorship-resistant, zero-knowledge P2P trading to India. We are ready for your questions!"*
