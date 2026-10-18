@@ -19,8 +19,8 @@ import { P2POrderEntity } from "@/lib/arkivOrderbook";
 
 interface NavbarProps {
   walletAddress: string;
-  isJudgeDemoActive: boolean;
-  onToggleDemoMode: () => void;
+  isJudgeDemoActive?: boolean;
+  onToggleDemoMode?: () => void;
   onConnectWallet?: () => void;
   isMetaMaskConnected?: boolean;
   orders?: P2POrderEntity[];
@@ -30,8 +30,6 @@ interface NavbarProps {
 
 export const Navbar: React.FC<NavbarProps> = ({
   walletAddress,
-  isJudgeDemoActive,
-  onToggleDemoMode,
   onConnectWallet,
   isMetaMaskConnected,
   orders = [],
@@ -179,19 +177,6 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Right Action Items */}
         <div className="flex items-center gap-3">
-          {/* Judge Demo Toggle */}
-          <button
-            onClick={onToggleDemoMode}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
-              isJudgeDemoActive
-                ? "bg-emerald-50 text-emerald-700 border border-emerald-300 shadow-xs"
-                : "bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200"
-            }`}
-          >
-            <Zap className="w-3.5 h-3.5 text-emerald-600" />
-            <span>{isJudgeDemoActive ? "Judge Demo: Active" : "1-Click Judge Demo"}</span>
-          </button>
-
           {/* Connect / Wallet Balance Pill */}
           <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl p-1 text-xs">
             <button
