@@ -14,6 +14,10 @@
 | **Target Tracks** | 🏆 **Best Indian Use Case** ($2,000 USDC + Devcon 8 Ticket)<br>🛡️ **Censorship Resistance** ($750 USDC + Devcon 8 Ticket)<br>🔒 **Privacy** ($750 USDC + Devcon 8 Ticket) |
 | **Primary Orderbook Network** | **Arkiv Tiramisu Testnet** (Chain ID: `7738577`) |
 | **Collateral Escrow Network** | **Base Sepolia Testnet** (Chain ID: `84532`) |
+| **Circle USDC Faucet** | [faucet.circle.com](https://faucet.circle.com) (Claim 10 USDC on Base Sepolia) |
+| **Arkiv GLM Faucet** | [hub.arkiv.network/faucet](https://hub.arkiv.network/faucet) (Claim 100 GLM on Tiramisu) |
+| **Base Sepolia USDC Contract** | `0x036CbD53842c5426634e7929541eC2318f3dCF7e` |
+| **Base Sepolia Escrow Contract** | [`0xe43113320abe84a5c155016bc21cd9abceedfb05`](https://sepolia.basescan.org/address/0xe43113320abe84a5c155016bc21cd9abceedfb05) |
 | **Core SDK** | `@arkiv-network/sdk` v0.8.1 |
 | **GitHub Repository** | [github.com/Ajaykrishnanand/p2p-zkarkiv](https://github.com/Ajaykrishnanand/p2p-zkarkiv) |
 | **Arkiv Explorer** | [tiramisu.explorer.arkiv.network](https://tiramisu.explorer.arkiv.network) |
@@ -106,8 +110,11 @@
 
 ### Detailed Breakdown of the Steps:
 
-1. **Maker Creates Sell Order with Escrow Deposit:**
-   - The seller (Maker) deposits USDC collateral into the **Base Sepolia Escrow Contract**.
+1. **Maker Creates Sell Order with Escrow Deposit & Accurate INR Sizing:**
+   - The seller (Maker) deposits USDC collateral into the **Base Sepolia Escrow Contract** (`0xe43113320abe84a5c155016bc21cd9abceedfb05`).
+   - Sizing Engine calculates INR dynamically down to the exact paise:
+     $$\text{Amount (INR)} = \text{USDC Quantity} \times \text{Limit Price (INR/USDC)}$$
+   - Bidirectional input ensures typing USDC computes INR, and typing INR computes USDC without rounding loss.
    - The maker posts an order to **Arkiv DB-Chain** (`createEntity`) indexed by rate and INR amount with a synthetic payee alias (e.g. `merchant01.synth@okhdfc`). No real phone number or personal bank details are stored.
 
 2. **30-Minute Ephemeral Escrow Lock:**
@@ -451,3 +458,65 @@ Q1 2027: Testnet Alpha (Devcon 8 Mumbai) ──▶ Q2 2027: MPC zkTLS Notary Eng
 
 > **Speaker Notes:**  
 > *"Thank you judges. We invite you to test the live app right now, try out the UPI mobile simulator, inspect the zkTLS proofs, and join us in bringing censorship-resistant, zero-knowledge P2P trading to India. We are ready for your questions!"*
+
+---
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                               SLIDE 11                                 │
+│              LIVE EVALUATOR GUIDE — CIRCLE & ARKIV FAUCETS             │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+# Slide 11: Live Evaluator Guide — Circle USDC, Arkiv GLM & Exact INR Math
+
+### Headline:
+**Complete Onboarding Runbook: Claim Testnet USDC, GLM Gas & Experience Live Cross-Chain P2P.**
+
+```
+┌───────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                    EVALUATOR ONBOARDING PIPELINE                                      │
+│                                                                                                       │
+│   [ 1. CIRCLE FAUCET ]                [ 2. ARKIV FAUCET ]               [ 3. IN-APP SIZING & ESCROW ] │
+│   • faucet.circle.com                 • hub.arkiv.network/faucet        • Exact INR = USDC × Rate     │
+│   • Select Base Sepolia               • Select Tiramisu (7738577)       • 2-decimal paise precision   │
+│   • Claim 10 USDC (0x036CbD...)       • Claim 100 GLM Gas Tokens        • MAX clamps to Escrow        │
+│   • Gas: Coinbase / Alchemy           • Pays for createEntity / patch   • Deposit to Escrow Contract  │
+└───────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 1. Circle Official USDC Faucet (Base Sepolia)
+* **Faucet URL:** [https://faucet.circle.com](https://faucet.circle.com)
+* **Step 1:** Select **Base Sepolia** from the network list.
+* **Step 2:** Select **USDC** as the token.
+* **Step 3:** Paste your MetaMask wallet address and request tokens.
+* **Result:** You receive **10.00 USDC** instantly on Base Sepolia.
+* **MetaMask Token Import:**
+  - Contract: `0x036CbD53842c5426634e7929541eC2318f3dCF7e`
+  - Symbol: `USDC` | Decimals: `6`
+* **Base Sepolia ETH Gas:** If needed for escrow approval, claim free ETH from the [Coinbase Base Sepolia Faucet](https://www.coinbase.com/faucets/base-ethereum-sepolia-faucet).
+
+### 2. Arkiv Official GLM Faucet (Tiramisu Testnet)
+* **Faucet URL:** [https://hub.arkiv.network/faucet](https://hub.arkiv.network/faucet)
+* **Step 1:** Connect MetaMask or enter your address.
+* **Step 2:** Select **Arkiv Tiramisu (`7738577`)**.
+* **Step 3:** Click **"Request 100 GLM"**.
+* **Result:** You receive **100 GLM** to pay for gas when calling `createEntity`, `patchEntity`, and registering nullifiers.
+
+### 3. Bidirectional & Accurate INR Sizing Engine
+* **Mathematical Invariant:**
+  $$\text{Amount (INR)} = \text{USDC Quantity} \times \text{Limit Price (INR/USDC)}$$
+  $$\text{USDC Quantity} = \frac{\text{Amount (INR)}}{\text{Limit Price (INR/USDC)}}$$
+* **Two-Way Real-Time Synchronization:**
+  - Typing `1.50 USDC` at `₹87.50` calculates exactly `₹131.25 INR`.
+  - Typing `₹131.25 INR` computes `1.50 USDC`.
+  - Step interval of `0.01` ensures fractional paise are never truncated.
+  - The **`MAX` button** queries your confirmed Base Sepolia escrow deposit (e.g. `1.50 USDC`) and locks your sell order to that exact collateral.
+
+### 4. Seamless Network Switcher
+* The top bar features an interactive **Network Switcher**:
+  - Switch to **Base Sepolia (`84532`)** to approve and deposit USDC collateral.
+  - Switch to **Arkiv Tiramisu (`7738577`)** to broadcast orders and execute zkTLS settlements.
+
+> **Speaker Notes:**  
+> *"For evaluators and judges wanting to test the real contract flow: Circle provides 10 testnet USDC on Base Sepolia, and the Arkiv Hub faucet gives you 100 GLM for DB-Chain transactions. Our trade engine dynamically calculates INR down to the exact paise without rounding errors, and our in-app network switcher lets you toggle between Base Sepolia and Arkiv with a single click."*

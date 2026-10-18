@@ -50,29 +50,99 @@ If you are a hackathon judge or first-time visitor, you can test the **entire en
 
 ---
 
-## 3. 💼 How to Trade as a Maker (Selling USDC for INR)
+## 3. 🪙 Faucet Guide: How to Get Testnet USDC & GLM Tokens
 
-As a liquidity provider or seller, you deposit USDC and list an order on Arkiv DB-Chain:
+To experience the full live cross-chain flow using MetaMask, you will need **testnet USDC on Base Sepolia** (for escrow deposits) and **GLM tokens on Arkiv Tiramisu** (for orderbook gas):
 
-1. **Open the Trade Panel:** Look at the **"Place Order"** panel on the right side of the trading terminal.
-2. **Select the "Sell USDC" Tab:** Ensure you are on the Sell tab.
-3. **Enter the INR Order Amount:**
-   - Type your desired INR amount (e.g. `5000`), or click one of the quick buttons: `₹1k`, `₹5k`, `₹10k`, `₹50k`.
-   - The panel automatically calculates the USDC amount based on the current exchange rate.
-4. **Set Your Exchange Rate:**
-   - Adjust the exchange rate in INR per USDC (e.g. `87.50`).
-5. **Set Your Synthetic UPI Alias:**
-   - Choose a synthetic alias (e.g. `merchant01.synth@okhdfc` or `priya.synth@okaxis`).
-   - ⚠️ **Zero-PII Gate:** You *must* use a synthetic alias containing `.synth@` or `.demo@`. If you enter a real 10-digit Indian phone number or real personal VPA, the protocol guard will reject it immediately.
-6. **Set the Order Expiration (TTL):**
-   - Use the slider to set order validity between **15 minutes and 120 minutes** (default: 60 minutes).
-   - *Why?* Arkiv's native `ExpirationTime` automatically removes stale FX quotes from the orderbook so you never get filled at outdated exchange rates.
-7. **Click "Post Order on Arkiv DB-Chain":**
-   - The order entity is broadcast to the Tiramisu Testnet validator network and instantly appears in the live orderbook.
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                               FAUCET ONBOARDING FLOW                                   │
+│  [1. Circle Faucet] ────▶ Receive 10 USDC on Base Sepolia (0x036CbD...)                │
+│  [2. Base ETH Faucet] ──▶ Receive 0.05 ETH for Escrow Gas (Coinbase / Alchemy)         │
+│  [3. Arkiv Faucet] ─────▶ Receive 100 GLM on Tiramisu (7738577) for Orderbook Gas      │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### A. How to Get Testnet USDC from Circle Faucet (Base Sepolia)
+Circle provides official testnet USDC directly on Base Sepolia:
+1. Navigate to the **Circle Faucet**: [https://faucet.circle.com](https://faucet.circle.com)
+2. In the **"Select Network"** dropdown, choose **Base Sepolia**.
+3. Under **"Select Token"**, select **USDC**.
+4. Paste your MetaMask address (e.g. `0x79b435...`).
+5. Complete the captcha and click **"Send 10 USDC"**.
+6. Within ~5 seconds, **10.00 USDC** will arrive in your wallet!
+7. **Import Token into MetaMask:**
+   - Click "Import tokens" in MetaMask while connected to Base Sepolia.
+   - Token Contract Address: `0x036CbD53842c5426634e7929541eC2318f3dCF7e`
+   - Token Symbol: `USDC`
+   - Token Decimals: `6`
+
+> **Base Sepolia Gas ETH:** If you need gas to approve or deposit escrow, claim free Base Sepolia ETH from the [Coinbase Faucet](https://www.coinbase.com/faucets/base-ethereum-sepolia-faucet) or [Alchemy Faucet](https://www.alchemy.com/faucets/base-sepolia).
 
 ---
 
-## 4. 🛒 How to Trade as a Taker (Buying USDC with INR via UPI)
+### B. How to Get Testnet GLM from Arkiv Faucet (Tiramisu Testnet)
+Arkiv provides free testnet GLM tokens to pay for `createEntity`, `patchEntity`, and nullifier registration transactions:
+1. Navigate to the **Arkiv Hub Faucet**: [https://hub.arkiv.network/faucet](https://hub.arkiv.network/faucet)
+2. Connect your MetaMask wallet or paste your address.
+3. Click **"Request 100 GLM"** on the Tiramisu Testnet.
+4. Your address will receive **100 GLM** instantly.
+5. In the zkUPI-Arkiv web app, you will see your balance update in real-time in the top bar (e.g. `100.00 GLM`) and in the Trade Panel!
+
+---
+
+### C. One-Click In-App Network Switcher
+In the top-right navigation bar of zkUPI-Arkiv, you will find our **Network Switcher**:
+* Click the network badge to instantly switch MetaMask between:
+  - **Base Sepolia (`84532`):** Used to approve and deposit USDC collateral into the smart contract escrow.
+  - **Arkiv Tiramisu (`7738577`):** Used to broadcast orders, update lock states, and query the decentralized orderbook.
+
+---
+
+## 4. 💼 How to Trade as a Maker (Selling USDC for INR & Accurate INR Math)
+
+As a liquidity provider or seller, you deposit USDC and list an order on Arkiv DB-Chain:
+
+### Step 1: Deposit USDC Collateral into Base Sepolia Escrow
+1. Ensure your wallet is connected to **Base Sepolia** (use the Network Switcher in the top bar).
+2. Click **"Deposit Escrow"** in the top navigation or in the Trade Panel under "Sell USDC".
+3. Enter the amount of USDC you wish to deposit (e.g. `1.50 USDC` or `10.00 USDC`), or click **"MAX"**.
+4. The modal dynamically calculates the equivalent INR value based on the prevailing exchange rate (`₹87.50 / USDC`):
+   $$\text{INR Value} = \text{USDC Amount} \times 87.50$$
+5. Click **"Approve & Deposit USDC"**:
+   - First transaction: ERC20 `approve` granting allowance to escrow contract `0xe43113320abe84a5c155016bc21cd9abceedfb05`.
+   - Second transaction: `depositEscrow` locking your collateral on Base Sepolia.
+6. The app automatically verifies your confirmed on-chain deposit (e.g. **1.50 USDC**) and unlocks your selling capability!
+
+---
+
+### Step 2: Accurate INR & USDC Calculation Logic
+Our trade panel implements **real-time bidirectional calculation** with strict 2-decimal precision (paise accuracy):
+* **Live Mathematical Conversion:**
+  $$\text{Amount (INR)} = \text{USDC Quantity} \times \text{Limit Price (INR/USDC)}$$
+  $$\text{USDC Quantity} = \frac{\text{Amount (INR)}}{\text{Limit Price (INR/USDC)}}$$
+* **Two-Way Synchronized Inputs:**
+  - **Typing USDC:** If you enter `1.50 USDC` at `₹87.50`, the INR field immediately updates to `₹131.25`.
+  - **Typing INR:** If you enter `₹131.25`, the USDC field immediately calculates `1.50 USDC`.
+  - **Adjusting Limit Price:** Changing the rate immediately rescales the INR amount without wiping out your typed quantity.
+  - **MAX Button:** Automatically clamps your order to your exact verified deposited escrow balance (e.g. `1.50 USDC` $\rightarrow$ `₹131.25 INR`) so you can never accidentally create an uncollateralized order.
+  - **Percentage Slider:** Sliders at `25%`, `50%`, `75%`, and `100%` compute proportional quantities down to the exact paise.
+
+---
+
+### Step 3: Set Synthetic Alias & Post Order on Arkiv
+1. **Set Your Synthetic UPI Alias:**
+   - Choose a synthetic alias (e.g. `merchant01.synth@okhdfc` or `priya.synth@okaxis`).
+   - ⚠️ **Zero-PII Gate:** You *must* use a synthetic alias containing `.synth@` or `.demo@`. If you enter a real 10-digit Indian phone number or real personal VPA, the protocol guard will reject it immediately.
+2. **Set Order Expiration (TTL):**
+   - Use the slider to set order validity between **15 minutes and 120 minutes** (default: 60 minutes).
+   - Arkiv's native `ExpirationTime` automatically cleans up stale quotes so you never get filled at outdated exchange rates.
+3. **Click "Post Order on Arkiv DB-Chain":**
+   - The order entity is broadcast to the Tiramisu Testnet validator network and instantly appears in the live orderbook with your verified escrow backing!
+
+---
+
+## 5. 🛒 How to Trade as a Taker (Buying USDC with INR via UPI)
 
 As a buyer, you pay INR to the seller via UPI and receive collateralized USDC:
 
@@ -104,7 +174,7 @@ As a buyer, you pay INR to the seller via UPI and receive collateralized USDC:
 
 ---
 
-## 5. 🔍 How to Inspect Raw Arkiv On-Chain Data
+## 6. 🔍 How to Inspect Raw Arkiv On-Chain Data
 
 Transparency is built directly into every order card:
 
@@ -118,7 +188,7 @@ Transparency is built directly into every order card:
 
 ---
 
-## 6. 👛 Wallet Options: Burner Signer vs. MetaMask
+## 7. 👛 Wallet Options: Burner Signer vs. MetaMask
 
 zkUPI-Arkiv supports two wallet modes:
 
@@ -139,7 +209,7 @@ zkUPI-Arkiv supports two wallet modes:
 
 ---
 
-## 7. 🛠️ Local Developer & Reproducible Runbook
+## 8. 🛠️ Local Developer & Reproducible Runbook
 
 If you want to run the codebase locally or inspect the CLI scripts:
 
@@ -192,7 +262,7 @@ pnpm run deploy:base
 
 ---
 
-## 8. ❓ Frequently Asked Questions (FAQ)
+## 9. ❓ Frequently Asked Questions (FAQ)
 
 #### Q1: Why does the order have an expiration timer?
 > **Answer:** In traditional finance, FX rates fluctuate constantly. On Arkiv, `ExpirationTime` ensures that open quotes self-prune after 60 minutes so makers aren't trapped with stale rates, and locked orders expire after 30 minutes if a buyer fails to complete payment.
@@ -208,15 +278,17 @@ pnpm run deploy:base
 
 ---
 
-## 9. 🔗 Official Network & Explorer Links
+## 10. 🔗 Official Network & Explorer Links
 
 | Resource | URL |
 | :--- | :--- |
 | **Arkiv Tiramisu Explorer** | [https://tiramisu.explorer.arkiv.network](https://tiramisu.explorer.arkiv.network) |
 | **Arkiv Tiramisu RPC** | `https://rpc.tiramisu.db-chain.testnet.arkiv.network` |
 | **Arkiv WebSocket RPC** | `wss://rpc.tiramisu.db-chain.testnet.arkiv.network` |
-| **Arkiv Test Token Faucet** | [https://hub.arkiv.network/faucet](https://hub.arkiv.network/faucet) |
+| **Arkiv Test Token Faucet (GLM)** | [https://hub.arkiv.network/faucet](https://hub.arkiv.network/faucet) |
+| **Circle Official USDC Faucet** | [https://faucet.circle.com](https://faucet.circle.com) |
+| **Circle USDC Base Sepolia Contract** | `0x036CbD53842c5426634e7929541eC2318f3dCF7e` |
 | **BaseScan Explorer** | [https://sepolia.basescan.org](https://sepolia.basescan.org) |
-| **Base Sepolia Faucet** | [https://www.coinbase.com/faucets/base-ethereum-sepolia-faucet](https://www.coinbase.com/faucets/base-ethereum-sepolia-faucet) |
-| **Circle USDC Base Sepolia** | `0x036CbD53842c5426634e7929541eC2318f3dCF7e` |
+| **Base Sepolia ETH Gas Faucet** | [https://www.coinbase.com/faucets/base-ethereum-sepolia-faucet](https://www.coinbase.com/faucets/base-ethereum-sepolia-faucet) |
+| **Base Sepolia Escrow Contract** | [`0xe43113320abe84a5c155016bc21cd9abceedfb05`](https://sepolia.basescan.org/address/0xe43113320abe84a5c155016bc21cd9abceedfb05) |
 | **Project GitHub Repository** | [https://github.com/Ajaykrishnanand/p2p-zkarkiv](https://github.com/Ajaykrishnanand/p2p-zkarkiv) |

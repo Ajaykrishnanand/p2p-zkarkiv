@@ -185,7 +185,7 @@ export const LiveOrderbook: React.FC<LiveOrderbookProps> = ({
 
                     {/* Order Value */}
                     <td className="py-3 px-3 text-right font-bold text-slate-900">
-                      ₹{amountInr.toLocaleString("en-IN")}.00
+                      ₹{amountInr.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </td>
 
                     {/* Order Quantity */}

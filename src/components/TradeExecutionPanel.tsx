@@ -116,16 +116,16 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
   useEffect(() => {
     if (tradeSide === "SELL") {
       if (depositedEscrowUsdc > 0) {
-        setAmountInr(Math.round(depositedEscrowUsdc * limitPrice));
+        setAmountInr(Number((depositedEscrowUsdc * limitPrice).toFixed(2)));
       } else {
         setAmountInr(0);
       }
     } else {
-      if (amountInr <= 0 || (depositedEscrowUsdc > 0 && amountInr === Math.round(depositedEscrowUsdc * limitPrice))) {
+      if (amountInr <= 0 || (depositedEscrowUsdc > 0 && amountInr === Number((depositedEscrowUsdc * limitPrice).toFixed(2)))) {
         setAmountInr(5000);
       }
     }
-  }, [tradeSide, depositedEscrowUsdc, limitPrice]);
+  }, [tradeSide, depositedEscrowUsdc]);
 
   const handleSliderChange = (pct: number) => {
     setPercentSlider(pct);
@@ -133,7 +133,7 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
       if (escrowAvailable > 0) {
         // Scale according to deposited escrow balance
         const calculatedUsdc = (escrowAvailable * pct) / 100;
-        const inrAmount = Math.round(calculatedUsdc * limitPrice);
+        const inrAmount = Number((calculatedUsdc * limitPrice).toFixed(2));
         setAmountInr(inrAmount);
       } else {
         setAmountInr(0);
@@ -349,12 +349,12 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
                     <button
                       type="button"
                       onClick={() => {
-                        const maxInr = Math.round(escrowAvailable * limitPrice);
+                        const maxInr = Number((escrowAvailable * limitPrice).toFixed(2));
                         setAmountInr(maxInr);
                       }}
                       className="block mt-0.5 font-bold text-rose-950 underline cursor-pointer"
                     >
-                      Set to max {escrowAvailable.toFixed(2)} USDC (₹{Math.round(escrowAvailable * limitPrice).toLocaleString("en-IN")})
+                      Set to max {escrowAvailable.toFixed(2)} USDC (₹{(escrowAvailable * limitPrice).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
                     </button>
                   </div>
                 </div>
@@ -421,7 +421,13 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
                 type="number"
                 step="0.05"
                 value={limitPrice}
-                onChange={(e) => setLimitPrice(Number(e.target.value))}
+                onChange={(e) => {
+                  const newPrice = Number(e.target.value) || 87.5;
+                  setLimitPrice(newPrice);
+                  if (numUsdcQuantity > 0) {
+                    setAmountInr(Number((numUsdcQuantity * newPrice).toFixed(2)));
+                  }
+                }}
                 className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-3 pr-12 py-2 text-xs font-mono font-bold text-slate-900 focus:outline-none focus:border-emerald-500"
                 required
               />
@@ -431,7 +437,7 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
             </div>
           </div>
 
-          {/* Dual Inputs: INR and USDC */}
+          {/* Dual Inputs: INR and USDC (Both fully editable & synchronized) */}
           <div className="grid grid-cols-2 gap-2">
             <div>
               <label className="block text-[11px] font-semibold text-slate-600 mb-1">
@@ -439,11 +445,13 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
               </label>
               <input
                 type="number"
-                step="10"
+                step="0.01"
                 value={amountInr === 0 ? "" : amountInr}
-                placeholder={isSell ? "0" : "5000"}
+                placeholder={isSell ? "0" : "875"}
                 onChange={(e) => setAmountInr(Number(e.target.value) || 0)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs font-mono font-bold text-slate-900 focus:outline-none focus:border-emerald-500"
+                className={`w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs font-mono font-bold text-slate-900 focus:outline-none ${
+                  isSell ? "focus:border-rose-500" : "focus:border-emerald-500"
+                }`}
                 required
               />
             </div>
@@ -456,7 +464,7 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
                 {isSell && escrowAvailable > 0 && (
                   <button
                     type="button"
-                    onClick={() => setAmountInr(Math.round(escrowAvailable * limitPrice))}
+                    onClick={() => setAmountInr(Number((escrowAvailable * limitPrice).toFixed(2)))}
                     className="text-[10px] text-blue-600 font-bold hover:underline cursor-pointer"
                   >
                     MAX ({escrowAvailable.toFixed(2)})
@@ -468,19 +476,14 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
                   type="number"
                   step="0.01"
                   value={numUsdcQuantity === 0 ? "" : usdcQuantity}
-                  placeholder={isSell ? (escrowAvailable > 0 ? escrowAvailable.toFixed(2) : "0.00") : "57.14"}
+                  placeholder={isSell ? (escrowAvailable > 0 ? escrowAvailable.toFixed(2) : "0.00") : "10.00"}
                   onChange={(e) => {
-                    if (isSell) {
-                      const val = parseFloat(e.target.value) || 0;
-                      setAmountInr(Math.round(val * limitPrice));
-                    }
+                    const val = parseFloat(e.target.value) || 0;
+                    setAmountInr(Number((val * (limitPrice || 87.5)).toFixed(2)));
                   }}
-                  className={`w-full border rounded-lg px-3 py-2 text-xs font-mono font-bold pr-12 ${
-                    isSell
-                      ? "bg-slate-50 border-slate-200 text-slate-900 focus:outline-none focus:border-rose-500"
-                      : "bg-slate-100 border-slate-200 text-emerald-700 cursor-not-allowed"
+                  className={`w-full border rounded-lg px-3 py-2 text-xs font-mono font-bold pr-12 bg-slate-50 border-slate-200 text-slate-900 focus:outline-none ${
+                    isSell ? "focus:border-rose-500" : "focus:border-emerald-500"
                   }`}
-                  readOnly={!isSell}
                 />
                 <span className="absolute right-3 top-2 text-[10px] font-bold text-slate-400">
                   USDC

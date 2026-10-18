@@ -416,7 +416,11 @@ export const BaseEscrowModal: React.FC<BaseEscrowModalProps> = ({
                   {usdcBalance && Number(usdcBalance) > 0 && (
                     <button
                       type="button"
-                      onClick={() => setUsdcAmount(usdcBalance)}
+                      onClick={() => {
+                        setUsdcAmount(usdcBalance);
+                        const calculated = Number(((parseFloat(usdcBalance) || 0) * 87.5).toFixed(2));
+                        setAmountInr(calculated);
+                      }}
                       className="text-[10px] text-blue-600 font-bold hover:underline cursor-pointer"
                     >
                       MAX ({usdcBalance})
@@ -428,7 +432,12 @@ export const BaseEscrowModal: React.FC<BaseEscrowModalProps> = ({
                     type="number"
                     step="0.01"
                     value={usdcAmount}
-                    onChange={(e) => setUsdcAmount(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setUsdcAmount(val);
+                      const parsed = parseFloat(val) || 0;
+                      setAmountInr(Number((parsed * 87.5).toFixed(2)));
+                    }}
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono text-slate-800 text-xs focus:outline-none focus:border-blue-500 pr-12"
                     placeholder="1.50"
                   />
@@ -445,10 +454,16 @@ export const BaseEscrowModal: React.FC<BaseEscrowModalProps> = ({
                 <div className="relative">
                   <input
                     type="number"
+                    step="0.01"
                     value={amountInr}
-                    onChange={(e) => setAmountInr(Number(e.target.value))}
+                    onChange={(e) => {
+                      const val = Number(e.target.value) || 0;
+                      setAmountInr(val);
+                      const calculatedUsdc = Number((val / 87.5).toFixed(2));
+                      setUsdcAmount(calculatedUsdc.toString());
+                    }}
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono text-slate-800 text-xs focus:outline-none focus:border-blue-500 pr-10"
-                    placeholder="5000"
+                    placeholder="131.25"
                   />
                   <span className="absolute right-3 top-2 text-slate-400 font-bold text-[10px]">
                     ₹
