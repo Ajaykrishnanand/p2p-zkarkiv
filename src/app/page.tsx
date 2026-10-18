@@ -257,6 +257,9 @@ export default function Home() {
                   <span className="text-[11px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
                     All 5 Core Features Active
                   </span>
+                  <span className="text-[11px] font-mono text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
+                    Base Sepolia Escrow (contracts/BaseSepoliaEscrow.sol)
+                  </span>
                 </div>
                 <div className="flex items-center gap-3 text-xs text-slate-500">
                   <span>Zero Indian Bank Account Needed</span>
