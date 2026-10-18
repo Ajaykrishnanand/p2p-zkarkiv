@@ -8,10 +8,10 @@ export const BASE_SEPOLIA_EXPLORER = "https://sepolia.basescan.org";
 // Circle Native USDC on Base Sepolia
 export const BASE_SEPOLIA_USDC_ADDRESS = "0x036CbD53842c5426634e7929541eC2318f3dCF7e";
 
-// Canonical deployed Escrow contract or environment variable
+// Canonical deployed Escrow contract on Base Sepolia
 export const BASE_SEPOLIA_ESCROW_ADDRESS =
   (process.env.NEXT_PUBLIC_BASE_SEPOLIA_ESCROW as `0x${string}`) ||
-  "0x892a095E7C841b525dDb6483C7E9A9b67323671a";
+  "0xe43113320abe84a5c155016bc21cd9abceedfb05";
 
 export const baseSepoliaPublicClient = createPublicClient({
   chain: baseSepolia,

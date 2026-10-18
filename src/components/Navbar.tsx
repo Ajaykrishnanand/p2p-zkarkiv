@@ -279,10 +279,11 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Base Sepolia Escrow Link */}
           <a
-            href="https://sepolia.basescan.org"
+            href="https://sepolia.basescan.org/address/0xe43113320abe84a5c155016bc21cd9abceedfb05"
             target="_blank"
             rel="noreferrer"
             className="hidden xl:flex px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs items-center gap-1.5 border border-slate-200 transition-all"
+            title="View Live Escrow Contract on Basescan"
           >
             <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
             <span>Base Sepolia Escrow</span>
