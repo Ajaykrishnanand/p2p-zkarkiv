@@ -77,6 +77,36 @@ export function payloadToJson<T = any>(payload: any): T {
  *
  * Posts a new liquidity quote on Arkiv with auto-expiring TTL.
  */
+export function unwrapArkivAttribute(val: any): any {
+  if (val && typeof val === "object" && "value" in val) {
+    if (typeof val.value === "bigint") return Number(val.value);
+    return val.value;
+  }
+  return val;
+}
+
+export function normalizeArkivAttributes(rawAttributes: any) {
+  if (!rawAttributes) return {};
+  const status = unwrapArkivAttribute(rawAttributes.status ?? rawAttributes.Status) ?? "OPEN";
+  const amountInr = Number(unwrapArkivAttribute(rawAttributes.amount_inr ?? rawAttributes.amountInr) ?? 0);
+  const rate = Number(unwrapArkivAttribute(rawAttributes.rate ?? rawAttributes.Rate) ?? 87.5);
+  const appId = unwrapArkivAttribute(rawAttributes.app_id ?? rawAttributes.appId) ?? APP_ID;
+  const entityType = unwrapArkivAttribute(rawAttributes.entity_type ?? rawAttributes.entityType) ?? "p2p_order";
+  const fiatCurrency = unwrapArkivAttribute(rawAttributes.fiat_currency ?? rawAttributes.fiatCurrency) ?? "INR";
+  const zkVerified = Boolean(unwrapArkivAttribute(rawAttributes.zk_verified ?? rawAttributes.zkVerified));
+
+  return {
+    ...rawAttributes,
+    status: String(status).toUpperCase(),
+    amountInr,
+    rate,
+    appId: String(appId),
+    entityType: String(entityType),
+    fiatCurrency: String(fiatCurrency),
+    zkVerified,
+  };
+}
+
 export async function createP2POrder(
   walletClient: any,
   params: {
@@ -103,7 +133,7 @@ export async function createP2POrder(
     nullifierEntityKey: null,
   };
 
-  return await walletClient.createEntity({
+  const createPromise = walletClient.createEntity({
     attributes: {
       app_id: str(APP_ID),
       entity_type: str("p2p_order"),
@@ -117,6 +147,33 @@ export async function createP2POrder(
     contentType: CONTENT_TYPE_JSON,
     expires: ExpirationTime.fromMinutes(params.ttlMinutes || 60),
   });
+
+  // Independent direct RPC poller:
+  // If MetaMask's internal `waitForTransactionReceipt` takes too long or stalls,
+  // this poller checks the Arkiv DB-Chain directly so the UI does not stay stuck.
+  const pollPromise = new Promise(async (resolve) => {
+    await new Promise((r) => setTimeout(r, 3500));
+    for (let i = 0; i < 20; i++) {
+      try {
+        const orders = await queryOpenInrOrders();
+        const found = orders.find(
+          (o) =>
+            o.data?.orderId === params.orderId ||
+            (o.data?.makerAddress?.toLowerCase() === params.makerAddress.toLowerCase() &&
+              o.data?.usdcAmount === params.usdcAmount)
+        );
+        if (found) {
+          resolve(found);
+          return;
+        }
+      } catch (e) {
+        // continue polling
+      }
+      await new Promise((r) => setTimeout(r, 2000));
+    }
+  });
+
+  return await Promise.race([createPromise, pollPromise]);
 }
 
 /**
@@ -141,14 +198,7 @@ export async function queryOpenInrOrders(maxRate?: number): Promise<P2POrderEnti
 
     return entities.map((entity: any) => ({
       key: entity.key,
-      attributes: {
-        ...entity.attributes,
-        amountInr: entity.attributes?.amount_inr ?? entity.attributes?.amountInr,
-        appId: entity.attributes?.app_id ?? entity.attributes?.appId,
-        entityType: entity.attributes?.entity_type ?? entity.attributes?.entityType,
-        fiatCurrency: entity.attributes?.fiat_currency ?? entity.attributes?.fiatCurrency,
-        zkVerified: entity.attributes?.zk_verified ?? entity.attributes?.zkVerified,
-      },
+      attributes: normalizeArkivAttributes(entity.attributes),
       data: payloadToJson<P2POrderPayload>(entity.payload),
       expiresAt: entity.expiresAt,
     }));
@@ -167,7 +217,7 @@ export async function queryOrderEntityByKey(key: `0x${string}`): Promise<P2POrde
     if (!entity) return null;
     return {
       key: entity.key,
-      attributes: entity.attributes,
+      attributes: normalizeArkivAttributes(entity.attributes),
       data: payloadToJson<P2POrderPayload>(entity.payload),
       expiresAt: entity.expiresAt,
     };

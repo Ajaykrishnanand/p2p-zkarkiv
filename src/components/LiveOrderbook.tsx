@@ -34,8 +34,32 @@ export const LiveOrderbook: React.FC<LiveOrderbookProps> = ({
   const [activeTab, setActiveTab] = useState<"ACTIVE" | "HISTORY" | "TRADES">("ACTIVE");
   const [hideOtherPairs, setHideOtherPairs] = useState<boolean>(true);
 
+  const getOrderStatus = (order: any): string => {
+    const s = order?.attributes?.status;
+    if (typeof s === "object" && s !== null && "value" in s) {
+      return String(s.value).toUpperCase();
+    }
+    return String(s || "OPEN").toUpperCase();
+  };
+
+  const getOrderAmountInr = (order: any): number => {
+    const a = order?.attributes?.amountInr ?? order?.attributes?.amount_inr;
+    if (typeof a === "object" && a !== null && "value" in a) {
+      return Number(a.value);
+    }
+    return Number(a || 0);
+  };
+
+  const getOrderRate = (order: any): number => {
+    const r = order?.attributes?.rate;
+    if (typeof r === "object" && r !== null && "value" in r) {
+      return Number(r.value);
+    }
+    return Number(r || 87.5);
+  };
+
   const filteredOrders = orders.filter((order) => {
-    const status = String(order.attributes?.status || "OPEN").toUpperCase();
+    const status = getOrderStatus(order);
     if (activeTab === "ACTIVE") return status === "OPEN" || status === "LOCKED";
     if (activeTab === "HISTORY") return status === "SETTLED";
     return true;
@@ -56,7 +80,7 @@ export const LiveOrderbook: React.FC<LiveOrderbookProps> = ({
           >
             <span>Active Orders</span>
             <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
-              {orders.filter((o) => o.attributes?.status !== "SETTLED").length}
+              {orders.filter((o) => getOrderStatus(o) !== "SETTLED").length}
             </span>
           </button>
 
@@ -70,7 +94,7 @@ export const LiveOrderbook: React.FC<LiveOrderbookProps> = ({
           >
             <span>Order History</span>
             <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
-              {orders.filter((o) => o.attributes?.status === "SETTLED").length}
+              {orders.filter((o) => getOrderStatus(o) === "SETTLED").length}
             </span>
           </button>
 
@@ -84,7 +108,7 @@ export const LiveOrderbook: React.FC<LiveOrderbookProps> = ({
           >
             <span>Trade History</span>
             <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
-              {orders.filter((o) => o.attributes?.status === "SETTLED").length}
+              {orders.filter((o) => getOrderStatus(o) === "SETTLED").length}
             </span>
           </button>
         </div>
@@ -148,9 +172,9 @@ export const LiveOrderbook: React.FC<LiveOrderbookProps> = ({
             </thead>
             <tbody className="divide-y divide-slate-100 font-mono text-[11px]">
               {filteredOrders.map((order) => {
-                const status = String(order.attributes?.status || "OPEN").toUpperCase();
-                const amountInr = Number(order.attributes?.amountInr || 0);
-                const rate = Number(order.attributes?.rate || 87.5);
+                const status = getOrderStatus(order);
+                const amountInr = getOrderAmountInr(order);
+                const rate = getOrderRate(order);
                 const usdcAmount = order.data?.usdcAmount || (amountInr / (rate || 87.5)).toFixed(2);
                 const isSettled = status === "SETTLED";
                 const isLocked = status === "LOCKED";
