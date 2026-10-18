@@ -115,7 +115,7 @@ export const LiveOrderbook: React.FC<LiveOrderbookProps> = ({
           <AlertCircle className="w-8 h-8 text-slate-300 mx-auto mb-2" />
           <p className="font-semibold text-slate-600 text-sm">No orders in this view</p>
           <p className="text-xs text-slate-400 mt-0.5">
-            Post an order via the Trade panel or click "1-Click Judge Demo" above to create on-chain testnet entities.
+            Post an order via the Trade panel on the right to create on-chain testnet entities.
           </p>
         </div>
       ) : (
