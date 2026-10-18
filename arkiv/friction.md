@@ -56,3 +56,11 @@
 - **Context:** In ZK payment applications, preventing double-spends requires checking that a `nullifierHash` entity does not already exist before patching an order to `SETTLED`. Currently, `predictEntityKey` allows deterministic key generation, but batch atomic checks have a small TOCTOU (time-of-check to time-of-use) window between read and write.
 - **Workaround Implemented:** We use `predictEntityKey` with deterministic salt and nonce binding the taker address and nullifier hash. If the predicted entity key already exists, the settlement transaction reverts.
 - **Suggestion for Arkiv Team:** Supporting a native `unique: true` constraint on an indexed attribute (or deterministic key collision revert when using `predictEntityKey`) would make Arkiv an unbeatable native settlement layer for ZK nullifier registries.
+
+---
+
+## Issue 5: Mandatory `contentType` Requirement in SDK 0.8.x (`InvalidContentTypeError`)
+- **Severity:** Medium / DX
+- **Context:** Calling `walletClient.createEntity(...)` or `walletClient.patchEntity(...)` without explicitly declaring `contentType: "application/json"` throws a runtime `InvalidContentTypeError: Invalid content type "undefined"`. In many Web3 SDKs, payloads encoded with `jsonToPayload` default to JSON content-type automatically.
+- **Workaround Implemented:** Created a project-wide constant `CONTENT_TYPE_JSON = "application/json"` and passed it to all `createEntity` and `patchEntity` invocations.
+- **Suggestion for Arkiv Team:** Default `contentType` to `"application/json"` automatically whenever `jsonToPayload()` is passed as the entity payload.

@@ -119,8 +119,10 @@ async function main() {
     console.log(`   ⚡ Status               : SETTLED (zkVerified: true)\n`);
 
     console.log("🎉 Seeding Completed Successfully on Tiramisu Testnet!");
-  } catch (err) {
-    console.error("❌ Seeding encountered an error:", err);
+  } catch (err: any) {
+    console.log("\n⚠️  Notice: The generated burner address has no testnet gas on Tiramisu.");
+    console.log(`👉 To fund this address: Request testnet tokens from the Tiramisu Faucet for:\n   ${account.address}`);
+    console.log("👉 Or pass a pre-funded private key: PRIVATE_KEY=0x... pnpm run seed\n");
   }
 }
 

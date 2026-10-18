@@ -13,6 +13,7 @@ import { assertSyntheticUpi } from "./syntheticGuard";
 import { ZkProofBundle } from "./zkTlsProver";
 
 export const APP_ID = "zkupi-arkiv-v1";
+export const CONTENT_TYPE_JSON = "application/json";
 
 export interface P2POrderPayload {
   orderId: string;
@@ -113,7 +114,8 @@ export async function createP2POrder(
       zkVerified: bool(false),
     },
     payload: jsonToPayload(payloadData),
-    expiresIn: ExpirationTime.fromMinutes(params.ttlMinutes || 60),
+    contentType: CONTENT_TYPE_JSON,
+    expires: ExpirationTime.fromMinutes(params.ttlMinutes || 60),
   });
 }
 
@@ -189,7 +191,8 @@ export async function lockP2POrder(
       takerAddress,
       lockedAt: new Date().toISOString(),
     }),
-    expiresIn: ExpirationTime.fromMinutes(30),
+    contentType: CONTENT_TYPE_JSON,
+    expires: ExpirationTime.fromMinutes(30),
   });
 }
 
@@ -207,7 +210,6 @@ export async function settleOrderWithZkTlsProof(
   zkBundle: ZkProofBundle
 ) {
   // Feature 3: Deterministic Entity Key Prediction to prevent UTR double-spend
-  // Converts first 16 hex chars to BigInt uint64 nonce
   const rawNonce = BigInt(zkBundle.nullifierHash.slice(0, 18));
   const nonce = rawNonce & 0xffffffffffffffffn;
 
@@ -233,7 +235,8 @@ export async function settleOrderWithZkTlsProof(
       groth16ProofDigest: zkBundle.groth16ProofDigest,
       settledAt: new Date().toISOString(),
     }),
-    expiresIn: ExpirationTime.fromDays(7),
+    contentType: CONTENT_TYPE_JSON,
+    expires: ExpirationTime.fromDays(7),
   });
 
   // Patch Order Entity to SETTLED with cryptographic proof summary
@@ -254,7 +257,8 @@ export async function settleOrderWithZkTlsProof(
       },
       nullifierEntityKey: nullifierTx.key ?? predictedNullifierKey,
     }),
-    expiresIn: ExpirationTime.fromDays(7),
+    contentType: CONTENT_TYPE_JSON,
+    expires: ExpirationTime.fromDays(7),
   });
 
   return { nullifierTx, settleTx, predictedNullifierKey };
