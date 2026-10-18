@@ -52,6 +52,30 @@ export default function Home() {
   const [inspectedEntity, setInspectedEntity] = useState<P2POrderEntity | null>(null);
   const [isUpiSimulatorOpen, setIsUpiSimulatorOpen] = useState<boolean>(false);
   const [isEscrowModalOpen, setIsEscrowModalOpen] = useState<boolean>(false);
+  const [depositedEscrowUsdc, setDepositedEscrowUsdc] = useState<number>(0);
+
+  // Sync deposited escrow balance from localStorage whenever wallet account changes
+  useEffect(() => {
+    if (typeof window !== "undefined" && walletAccount?.address) {
+      const saved = localStorage.getItem(`zkupi_escrow_deposit_${walletAccount.address.toLowerCase()}`);
+      if (saved) {
+        setDepositedEscrowUsdc(parseFloat(saved) || 0);
+      }
+    } else if (!walletAccount?.address) {
+      setDepositedEscrowUsdc(0);
+    }
+  }, [walletAccount?.address]);
+
+  // Handler for successful escrow deposits
+  const handleEscrowDepositSuccess = (amountUsdc: number) => {
+    setDepositedEscrowUsdc((prev) => {
+      const next = Number((prev + amountUsdc).toFixed(2));
+      if (typeof window !== "undefined" && walletAccount?.address) {
+        localStorage.setItem(`zkupi_escrow_deposit_${walletAccount.address.toLowerCase()}`, next.toString());
+      }
+      return next;
+    });
+  };
 
   // Check existing MetaMask authorization on mount and listen to account changes
   useEffect(() => {
@@ -175,6 +199,16 @@ export default function Home() {
         ttlMinutes: params.ttlMinutes,
       });
       await fetchOrders();
+
+      // Deduct used escrow collateral if seller was utilizing deposited escrow
+      const usdcSold = params.amountInr / params.rateInrPerUsdc;
+      setDepositedEscrowUsdc((prev) => {
+        const next = Math.max(0, Number((prev - usdcSold).toFixed(2)));
+        if (typeof window !== "undefined" && walletAccount?.address) {
+          localStorage.setItem(`zkupi_escrow_deposit_${walletAccount.address.toLowerCase()}`, next.toString());
+        }
+        return next;
+      });
     } catch (err: any) {
       console.warn("Live order creation failed on Arkiv DB-Chain:", err);
       // Re-throw so TradeExecutionPanel displays the failed transaction card
@@ -310,6 +344,7 @@ export default function Home() {
                 onOpenEscrowModal={() => setIsEscrowModalOpen(true)}
                 isSubmitting={isSubmitting}
                 selectedPrice={selectedBookPrice}
+                depositedEscrowUsdc={depositedEscrowUsdc}
               />
             </div>
           </div>
@@ -366,6 +401,7 @@ export default function Home() {
         isOpen={isEscrowModalOpen}
         onClose={() => setIsEscrowModalOpen(false)}
         walletAddress={walletAccount?.address || ""}
+        onDepositSuccess={handleEscrowDepositSuccess}
       />
     </div>
   );

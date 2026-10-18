@@ -33,6 +33,7 @@ interface BaseEscrowModalProps {
   defaultOrderId?: string;
   defaultUsdcAmount?: string;
   defaultAmountInr?: number;
+  onDepositSuccess?: (amountUsdc: number, txHash: string) => void;
 }
 
 export const BaseEscrowModal: React.FC<BaseEscrowModalProps> = ({
@@ -42,6 +43,7 @@ export const BaseEscrowModal: React.FC<BaseEscrowModalProps> = ({
   defaultOrderId = "",
   defaultUsdcAmount = "57.14",
   defaultAmountInr = 5000,
+  onDepositSuccess,
 }) => {
   const [currentChainId, setCurrentChainId] = useState<number | null>(null);
   const [orderId, setOrderId] = useState<string>(defaultOrderId || `ORD-${Math.floor(10000 + Math.random() * 90000)}`);
@@ -245,6 +247,9 @@ export const BaseEscrowModal: React.FC<BaseEscrowModalProps> = ({
 
       setDepositSuccessTx(txHash);
       await fetchBalances();
+      if (onDepositSuccess) {
+        onDepositSuccess(Number(usdcAmount) || 0, txHash);
+      }
     } catch (err: any) {
       console.warn("Escrow deposit failed:", err);
       let msg = err?.shortMessage || err?.message || "Escrow deposit transaction was rejected or failed";
@@ -262,6 +267,9 @@ export const BaseEscrowModal: React.FC<BaseEscrowModalProps> = ({
     const fakeTx = `0x${Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("")}`;
     setDepositSuccessTx(fakeTx);
     setErrorMsg(null);
+    if (onDepositSuccess) {
+      onDepositSuccess(Number(usdcAmount) || 57.14, fakeTx);
+    }
   };
 
   return (

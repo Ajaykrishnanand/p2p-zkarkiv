@@ -14,6 +14,9 @@ import {
   Radio,
   Wifi,
   ExternalLink,
+  Lock,
+  AlertCircle,
+  CheckCircle2,
 } from "lucide-react";
 import { isSyntheticUpi, generateSyntheticUpi } from "@/lib/syntheticGuard";
 import { useArkivWebSocket } from "@/lib/useArkivWebSocket";
@@ -32,6 +35,7 @@ interface TradeExecutionPanelProps {
   selectedPrice?: number;
   onConnectWallet?: () => void;
   onOpenEscrowModal?: () => void;
+  depositedEscrowUsdc?: number;
 }
 
 export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
@@ -41,6 +45,7 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
   selectedPrice,
   onConnectWallet,
   onOpenEscrowModal,
+  depositedEscrowUsdc = 0,
 }) => {
   const [tradeSide, setTradeSide] = useState<"BUY" | "SELL">("BUY");
   const [orderType, setOrderType] = useState<"LIMIT" | "MARKET">("LIMIT");
@@ -96,12 +101,24 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
   }, [selectedPrice]);
 
   const usdcQuantity = (amountInr / (limitPrice || 87.5)).toFixed(2);
+  const numUsdcQuantity = Number(usdcQuantity);
   const isAliasValid = isSyntheticUpi(syntheticAlias);
+  const isSell = tradeSide === "SELL";
+  const escrowAvailable = depositedEscrowUsdc ?? 0;
+  const isSellBlockedNoEscrow = isSell && escrowAvailable <= 0;
+  const isSellBlockedExceedsEscrow = isSell && escrowAvailable > 0 && numUsdcQuantity > escrowAvailable;
 
   const handleSliderChange = (pct: number) => {
     setPercentSlider(pct);
-    const calculated = Math.round((10000 * (pct / 100)) / 100) * 100;
-    setAmountInr(Math.max(calculated, 500));
+    if (isSell && escrowAvailable > 0) {
+      // Scale according to deposited escrow balance
+      const calculatedUsdc = (escrowAvailable * pct) / 100;
+      const inrAmount = Math.max(Math.round(calculatedUsdc * limitPrice), 100);
+      setAmountInr(inrAmount);
+    } else {
+      const calculated = Math.round((10000 * (pct / 100)) / 100) * 100;
+      setAmountInr(Math.max(calculated, 500));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -111,6 +128,17 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
 
     if (!isAliasValid) {
       setErrorMsg("Security Gate Rejection: Only synthetic UPI aliases (*.synth@*) allowed on Arkiv.");
+      return;
+    }
+
+    if (isSell && isSellBlockedNoEscrow) {
+      setErrorMsg("Escrow Collateral Required: You have 0 USDC deposited in escrow. Please deposit USDC into the Base Sepolia Escrow contract first.");
+      if (onOpenEscrowModal) onOpenEscrowModal();
+      return;
+    }
+
+    if (isSell && isSellBlockedExceedsEscrow) {
+      setErrorMsg(`Order quantity (${usdcQuantity} USDC) exceeds your deposited escrow balance (${escrowAvailable.toFixed(2)} USDC). Only orders up to your deposited balance are allowed.`);
       return;
     }
 
@@ -208,20 +236,87 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
             </button>
           </div>
 
-          {/* Base Sepolia Escrow Deposit Notice for Sellers */}
-          {tradeSide === "SELL" && onOpenEscrowModal && (
-            <div className="p-2.5 rounded-xl bg-blue-50/80 border border-blue-200 text-blue-900 flex items-center justify-between gap-2 animate-fadeIn">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse shrink-0" />
-                <span className="text-[11px] font-bold text-blue-950">Deposit Base Escrow</span>
+          {/* Deposited Escrow Collateral Dashboard Card for Sellers */}
+          {isSell && (
+            <div className="p-3 rounded-2xl bg-gradient-to-r from-blue-50/90 to-indigo-50/90 border border-blue-200/90 shadow-2xs space-y-2 animate-fadeIn">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold shadow-2xs">
+                    <Lock className="w-3.5 h-3.5" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block leading-none">
+                      Deposited Escrow Collateral
+                    </span>
+                    <span className="text-sm font-extrabold text-blue-950 font-mono">
+                      {escrowAvailable.toFixed(2)} USDC
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {escrowAvailable > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const maxInr = Math.round(escrowAvailable * limitPrice);
+                        setAmountInr(maxInr);
+                      }}
+                      className="px-2 py-1 bg-white hover:bg-slate-50 text-blue-700 border border-blue-200 font-bold rounded-lg text-[10px] transition-colors cursor-pointer shadow-2xs"
+                      title="Use exact deposited escrow balance"
+                    >
+                      MAX
+                    </button>
+                  )}
+                  {onOpenEscrowModal && (
+                    <button
+                      type="button"
+                      onClick={onOpenEscrowModal}
+                      className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-[10px] transition-colors cursor-pointer shadow-2xs flex items-center gap-1"
+                    >
+                      <Plus className="w-3 h-3" />
+                      <span>Deposit</span>
+                    </button>
+                  )}
+                </div>
               </div>
-              <button
-                type="button"
-                onClick={onOpenEscrowModal}
-                className="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10px] transition-colors cursor-pointer shadow-2xs shrink-0"
-              >
-                Deposit USDC
-              </button>
+
+              {/* Status / Requirement Indicator */}
+              {isSellBlockedNoEscrow ? (
+                <div className="p-2 rounded-xl bg-amber-100/70 border border-amber-200 text-amber-900 text-[11px] flex items-start gap-1.5 leading-tight">
+                  <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
+                  <span>
+                    <strong>0.00 USDC deposited:</strong> Deposit USDC to Base Sepolia Escrow before posting a sell order.
+                  </span>
+                </div>
+              ) : isSellBlockedExceedsEscrow ? (
+                <div className="p-2 rounded-xl bg-rose-100/70 border border-rose-200 text-rose-900 text-[11px] flex items-start gap-1.5 leading-tight">
+                  <AlertCircle className="w-3.5 h-3.5 text-rose-600 shrink-0 mt-0.5" />
+                  <div>
+                    <span>Order exceeds escrow: <strong>{usdcQuantity} USDC</strong> &gt; <strong>{escrowAvailable.toFixed(2)} USDC</strong>.</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const maxInr = Math.round(escrowAvailable * limitPrice);
+                        setAmountInr(maxInr);
+                      }}
+                      className="block mt-0.5 font-bold text-rose-950 underline cursor-pointer"
+                    >
+                      Set to max {escrowAvailable.toFixed(2)} USDC (₹{Math.round(escrowAvailable * limitPrice).toLocaleString("en-IN")})
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between text-[10px] text-emerald-700 font-medium px-1">
+                  <span className="flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                    <span>Collateral Verified on Base Sepolia</span>
+                  </span>
+                  <span className="font-mono">
+                    Remaining: {(escrowAvailable - numUsdcQuantity).toFixed(2)} USDC
+                  </span>
+                </div>
+              )}
             </div>
           )}
 
@@ -437,10 +532,28 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
               <span>Connect MetaMask to Trade</span>
               <ArrowRight className="w-4 h-4" />
             </button>
+          ) : isSell && isSellBlockedNoEscrow ? (
+            <button
+              type="button"
+              onClick={onOpenEscrowModal}
+              className="w-full py-3.5 rounded-xl font-bold text-sm text-white bg-blue-600 hover:bg-blue-700 shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer shadow-blue-600/20 active:scale-[0.99]"
+            >
+              <Lock className="w-4 h-4" />
+              <span>Deposit Escrow Collateral to Sell</span>
+            </button>
+          ) : isSell && isSellBlockedExceedsEscrow ? (
+            <button
+              type="button"
+              disabled
+              className="w-full py-3.5 rounded-xl font-bold text-xs text-white bg-rose-400 cursor-not-allowed opacity-80 flex items-center justify-center gap-2 shadow-sm"
+            >
+              <AlertTriangle className="w-4 h-4" />
+              <span>Exceeds Escrow ({escrowAvailable.toFixed(2)} USDC Max Allowed)</span>
+            </button>
           ) : (
             <button
               type="submit"
-              disabled={isSubmitting || !isAliasValid}
+              disabled={isSubmitting || !isAliasValid || (isSell && (isSellBlockedNoEscrow || isSellBlockedExceedsEscrow))}
               className={`w-full py-3 rounded-xl font-bold text-sm text-white shadow-md transition-all flex items-center justify-center gap-2 ${
                 tradeSide === "BUY"
                   ? "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20"
@@ -454,7 +567,7 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
                 </span>
               ) : (
                 <>
-                  <span>{tradeSide === "BUY" ? "Buy USDC" : "Sell USDC"} / Post Order</span>
+                  <span>{tradeSide === "BUY" ? "Buy USDC / Post Order" : `Sell ${usdcQuantity} USDC (Escrow Backed)`}</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
