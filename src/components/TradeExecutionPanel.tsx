@@ -30,6 +30,7 @@ interface TradeExecutionPanelProps {
   walletAddress: string;
   isSubmitting: boolean;
   selectedPrice?: number;
+  onConnectWallet?: () => void;
 }
 
 export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
@@ -37,6 +38,7 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
   walletAddress,
   isSubmitting,
   selectedPrice,
+  onConnectWallet,
 }) => {
   const [tradeSide, setTradeSide] = useState<"BUY" | "SELL">("BUY");
   const [orderType, setOrderType] = useState<"LIMIT" | "MARKET">("LIMIT");
@@ -125,7 +127,7 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
         headers: { "Content-Type": "application/json", "x-arkiv-source": "p2parkiv-ui" },
         body: JSON.stringify({
           event: "ORDER_CREATED",
-          sender: walletAddress || "0xBurnerSigner",
+          sender: walletAddress || "0xUnconnected",
           amountInr,
           rateInrPerUsdc: limitPrice,
           timestamp: new Date().toISOString(),
@@ -141,7 +143,7 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
         reason,
         code: err?.code || "ACTION_REJECTED_OR_INSUFFICIENT_GAS",
         timestamp: new Date().toLocaleTimeString(),
-        sender: walletAddress || "0xBurnerSigner",
+        sender: walletAddress || "0xUnconnected",
       };
 
       setFailedTx(failurePayload);
@@ -219,18 +221,28 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
           {/* Available Real On-Chain Balance Row */}
           <div className="flex items-center justify-between text-[11px] text-slate-500">
             <span>Available balance:</span>
-            <div className="flex items-center gap-1 font-mono font-bold text-slate-800">
-              <span>{onChainBalance !== null ? `${onChainBalance} GLM` : "-- GLM"}</span>
-              <a
-                href="https://hub.arkiv.network/faucet"
-                target="_blank"
-                rel="noreferrer"
-                className="text-emerald-600 hover:underline p-0.5"
-                title="Get Faucet Tokens"
+            {!walletAddress ? (
+              <button
+                type="button"
+                onClick={onConnectWallet}
+                className="text-amber-600 hover:text-amber-700 font-bold hover:underline flex items-center gap-1 cursor-pointer"
               >
-                <Plus className="w-3.5 h-3.5 rounded-full bg-slate-100 p-0.5" />
-              </a>
-            </div>
+                Connect MetaMask
+              </button>
+            ) : (
+              <div className="flex items-center gap-1 font-mono font-bold text-slate-800">
+                <span>{onChainBalance !== null ? `${onChainBalance} GLM` : "Querying..."}</span>
+                <a
+                  href="https://hub.arkiv.network/faucet"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-emerald-600 hover:underline p-0.5"
+                  title="Get Faucet Tokens"
+                >
+                  <Plus className="w-3.5 h-3.5 rounded-full bg-slate-100 p-0.5" />
+                </a>
+              </div>
+            )}
           </div>
 
           {/* Limit Price Input */}
@@ -378,27 +390,57 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
           )}
 
           {/* Large Primary Action Button */}
-          <button
-            type="submit"
-            disabled={isSubmitting || !isAliasValid}
-            className={`w-full py-3 rounded-xl font-bold text-sm text-white shadow-md transition-all flex items-center justify-center gap-2 ${
-              tradeSide === "BUY"
-                ? "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20"
-                : "bg-rose-600 hover:bg-rose-700 shadow-rose-600/20"
-            } disabled:opacity-50`}
-          >
-            {isSubmitting ? (
-              <span className="flex items-center gap-2">
-                <RefreshCw className="w-4 h-4 animate-spin" />
-                Submitting to Arkiv DB-Chain...
-              </span>
-            ) : (
-              <>
-                <span>{tradeSide === "BUY" ? "Buy USDC" : "Sell USDC"} / Post Order</span>
-                <ArrowRight className="w-4 h-4" />
-              </>
-            )}
-          </button>
+          {!walletAddress ? (
+            <button
+              type="button"
+              onClick={onConnectWallet}
+              className="w-full py-3.5 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
+            >
+              <svg className="w-5 h-5 shrink-0" viewBox="0 0 318.6 318.6" fill="none">
+                <path d="M274.1 35.5l-99.5 73.9L193.3 54.8z" fill="#E2761B" stroke="#E2761B" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M44.4 35.5l98.7 74.6-18.4-55.3z" fill="#E4761B" stroke="#E4761B" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M238.3 206.8l-28.5 43.1 58.6 16.2 16.7-58.8z" fill="#E4761B" stroke="#E4761B" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M34.9 207.3l16.6 58.8 58.6-16.2-28.5-43.1z" fill="#E4761B" stroke="#E4761B" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M107.5 137.9l-16.1 24.3 57.2 2.6-1.9-61.7z" fill="#E4761B" stroke="#E4761B" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M211.1 137.9l-39.6-35.4-1.3 62.3 57-2.6z" fill="#E4761B" stroke="#E4761B" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M109.9 249.9l36.9-18.1-31.9-24.8z" fill="#E4761B" stroke="#E4761B" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M171.8 231.8l36.9 18.1-5-42.9z" fill="#E4761B" stroke="#E4761B" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M208.7 249.9l-36.9-18.1 3.2 24.5.4 10.5 43.9-3.9z" fill="#D7C1B3" stroke="#D7C1B3" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M106.3 262.9l43.9 3.9.4-10.5 3.2-24.5-36.9 18.1z" fill="#D7C1B3" stroke="#D7C1B3" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M149.2 189.7l-41.2-1.8-25.7 38.8 38.6-.2z" fill="#233447" stroke="#233447" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M169.4 189.7l28.3 36.8 38.6.2-25.7-38.8z" fill="#233447" stroke="#233447" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M108 226.5l-38.6.2 3.7 13.1 36.9-18.1z" fill="#CD6116" stroke="#CD6116" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M211.1 226.7l-2 4.8 36.9 18.1 3.7-13.1z" fill="#CD6116" stroke="#CD6116" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M170.2 164.8l1.3-62.3 21.8-47.7-65.7.1 21.6 47.6-1.9 61.7 11.2 32.7.7.6.7-.6z" fill="#E4751F" stroke="#E4751F" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M148.8 197.5l-11.2-32.7-57.2-2.6 17.6 34.6 10.8 1.4z" fill="#F6851B" stroke="#F6851B" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M210.6 196.8l10.8-1.4 17.6-34.6-57 2.6-11.2 32.7z" fill="#F6851B" stroke="#F6851B" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <span>Connect MetaMask to Trade</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          ) : (
+            <button
+              type="submit"
+              disabled={isSubmitting || !isAliasValid}
+              className={`w-full py-3 rounded-xl font-bold text-sm text-white shadow-md transition-all flex items-center justify-center gap-2 ${
+                tradeSide === "BUY"
+                  ? "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20"
+                  : "bg-rose-600 hover:bg-rose-700 shadow-rose-600/20"
+              } disabled:opacity-50`}
+            >
+              {isSubmitting ? (
+                <span className="flex items-center gap-2">
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  Submitting to Arkiv DB-Chain...
+                </span>
+              ) : (
+                <>
+                  <span>{tradeSide === "BUY" ? "Buy USDC" : "Sell USDC"} / Post Order</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </button>
+          )}
 
           {/* Transaction Summary Table */}
           <div className="space-y-1 text-[11px] font-mono text-slate-500 pt-1">

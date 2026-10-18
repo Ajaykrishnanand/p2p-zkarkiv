@@ -31,32 +31,17 @@ export const wsPublicClient = typeof window !== "undefined"
   : publicClient;
 
 /**
- * Connects directly to MetaMask or browser EIP-1193 wallet to sign live on-chain transactions.
+ * Switches to Arkiv Tiramisu Testnet or prompts MetaMask to add it.
  */
-export async function getBrowserWalletClient() {
-  if (typeof window === "undefined" || !(window as any).ethereum) {
-    throw new Error("No Web3 wallet (MetaMask) detected in browser.");
-  }
-
-  const ethereum = (window as any).ethereum;
-
-  // Request accounts
-  const accounts = await ethereum.request({ method: "eth_requestAccounts" });
-  if (!accounts || accounts.length === 0) {
-    throw new Error("No accounts authorized in MetaMask.");
-  }
-
-  const account = accounts[0] as `0x${string}`;
-
-  // Ensure network is Tiramisu Testnet
+export async function switchOrAddTiramisuNetwork(ethereum: any) {
   try {
     await ethereum.request({
       method: "wallet_switchEthereumChain",
       params: [{ chainId: `0x${TIRAMISU_CHAIN_ID.toString(16)}` }],
     });
   } catch (switchError: any) {
-    // Chain not added, request add
-    if (switchError.code === 4902) {
+    // Chain not added (4902)
+    if (switchError.code === 4902 || switchError?.data?.originalError?.code === 4902) {
       await ethereum.request({
         method: "wallet_addEthereumChain",
         params: [
@@ -71,6 +56,54 @@ export async function getBrowserWalletClient() {
       });
     }
   }
+}
+
+/**
+ * Passively checks if MetaMask is already connected without popping up approval modal.
+ */
+export async function getConnectedBrowserAccount(): Promise<{ account: `0x${string}`; client: any } | null> {
+  if (typeof window === "undefined" || !(window as any).ethereum) {
+    return null;
+  }
+  const ethereum = (window as any).ethereum;
+  try {
+    const accounts = (await ethereum.request({ method: "eth_accounts" })) as string[];
+    if (!accounts || accounts.length === 0) {
+      return null;
+    }
+    const account = accounts[0] as `0x${string}`;
+    const client = createWalletClient({
+      chain: tiramisu,
+      transport: custom(ethereum),
+      account,
+    });
+    return { account, client };
+  } catch (e) {
+    console.warn("Passive MetaMask account check:", e);
+    return null;
+  }
+}
+
+/**
+ * Connects directly to MetaMask or browser EIP-1193 wallet to sign live on-chain transactions.
+ */
+export async function getBrowserWalletClient() {
+  if (typeof window === "undefined" || !(window as any).ethereum) {
+    throw new Error("No Web3 wallet (MetaMask) detected. Please install MetaMask to continue.");
+  }
+
+  const ethereum = (window as any).ethereum;
+
+  // Request accounts
+  const accounts = (await ethereum.request({ method: "eth_requestAccounts" })) as string[];
+  if (!accounts || accounts.length === 0) {
+    throw new Error("No accounts authorized in MetaMask.");
+  }
+
+  const account = accounts[0] as `0x${string}`;
+
+  // Ensure network is Tiramisu Testnet
+  await switchOrAddTiramisuNetwork(ethereum);
 
   const client = createWalletClient({
     chain: tiramisu,

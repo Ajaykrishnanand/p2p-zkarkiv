@@ -25,9 +25,8 @@ import {
   settleOrderWithZkTlsProof,
 } from "@/lib/arkivOrderbook";
 import {
-  getBurnerWalletClient,
   getBrowserWalletClient,
-  getOrCreateDemoPrivateKey,
+  getConnectedBrowserAccount,
   TIRAMISU_CHAIN_ID,
   ARKIV_EXPLORER_URL,
 } from "@/lib/arkivClient";
@@ -50,18 +49,62 @@ export default function Home() {
   const [orderToLock, setOrderToLock] = useState<P2POrderEntity | null>(null);
   const [inspectedEntity, setInspectedEntity] = useState<P2POrderEntity | null>(null);
 
-  // Initialize Burner Wallet on Client Mount as default
+  // Check existing MetaMask authorization on mount and listen to account changes
   useEffect(() => {
-    try {
-      const pk = getOrCreateDemoPrivateKey();
-      const { account, client } = getBurnerWalletClient(pk);
-      setWalletAccount({ address: account.address, client });
-    } catch (e) {
-      console.warn("Burner wallet initialization warning:", e);
+    if (typeof window !== "undefined") {
+      // Remove any lingering burner key from storage
+      try {
+        localStorage.removeItem("zkupi_burner_pk");
+      } catch {}
+
+      // Passively check if MetaMask is already connected
+      getConnectedBrowserAccount().then((res) => {
+        if (res) {
+          setWalletAccount({ address: res.account, client: res.client });
+          setIsMetaMask(true);
+        }
+      });
+
+      const ethereum = (window as any).ethereum;
+      if (ethereum?.on) {
+        const handleAccounts = (accounts: string[]) => {
+          if (accounts && accounts.length > 0) {
+            getBrowserWalletClient()
+              .then(({ account, client }) => {
+                setWalletAccount({ address: account, client });
+                setIsMetaMask(true);
+              })
+              .catch(console.warn);
+          } else {
+            setWalletAccount(null);
+            setIsMetaMask(false);
+          }
+        };
+
+        const handleChain = () => {
+          getConnectedBrowserAccount().then((res) => {
+            if (res) {
+              setWalletAccount({ address: res.account, client: res.client });
+              setIsMetaMask(true);
+            } else {
+              setWalletAccount(null);
+              setIsMetaMask(false);
+            }
+          });
+        };
+
+        ethereum.on("accountsChanged", handleAccounts);
+        ethereum.on("chainChanged", handleChain);
+
+        return () => {
+          ethereum.removeListener?.("accountsChanged", handleAccounts);
+          ethereum.removeListener?.("chainChanged", handleChain);
+        };
+      }
     }
   }, []);
 
-  // Connect MetaMask if requested
+  // Connect MetaMask directly on user action
   const handleConnectMetaMask = async () => {
     try {
       const { account, client } = await getBrowserWalletClient();
@@ -71,6 +114,12 @@ export default function Home() {
       console.error("MetaMask connection failed:", err);
       alert(err?.message || "Failed to connect MetaMask");
     }
+  };
+
+  // Disconnect wallet
+  const handleDisconnectMetaMask = () => {
+    setWalletAccount(null);
+    setIsMetaMask(false);
   };
 
   // Fetch orders from Arkiv DB-Chain
@@ -133,17 +182,30 @@ export default function Home() {
 
   // Handle Order Lock
   const handleLockOrder = async (order: P2POrderEntity) => {
-    try {
-      if (walletAccount?.client) {
-        await lockP2POrder(walletAccount.client, order.key, order.data, walletAccount.address);
-        await fetchOrders();
+    let client = walletAccount?.client;
+    let taker = walletAccount?.address;
+
+    if (!client || !taker) {
+      try {
+        const res = await getBrowserWalletClient();
+        setWalletAccount({ address: res.account, client: res.client });
+        setIsMetaMask(true);
+        client = res.client;
+        taker = res.account;
+      } catch (err: any) {
+        throw new Error(err?.message || "Please connect MetaMask first to lock this order.");
       }
+    }
+
+    try {
+      await lockP2POrder(client, order.key, order.data, taker);
+      await fetchOrders();
     } catch (e) {
       console.warn("Live lock fell back to interactive state:", e);
       const lockedEntity: P2POrderEntity = {
         ...order,
         attributes: { ...order.attributes, status: "LOCKED" },
-        data: { ...order.data, takerAddress: walletAccount?.address || "0xTaker" },
+        data: { ...order.data, takerAddress: taker || "0xTaker" },
       };
       setOrders((prev) => prev.map((o) => (o.key === order.key ? lockedEntity : o)));
     }
@@ -151,17 +213,30 @@ export default function Home() {
 
   // Handle Order Settlement
   const handleSettleOrder = async (order: P2POrderEntity, zkBundle: ZkProofBundle) => {
-    try {
-      if (walletAccount?.client) {
-        await settleOrderWithZkTlsProof(
-          walletAccount.client,
-          walletAccount.address as `0x${string}`,
-          order.key,
-          order.data,
-          zkBundle
-        );
-        await fetchOrders();
+    let client = walletAccount?.client;
+    let taker = walletAccount?.address;
+
+    if (!client || !taker) {
+      try {
+        const res = await getBrowserWalletClient();
+        setWalletAccount({ address: res.account, client: res.client });
+        setIsMetaMask(true);
+        client = res.client;
+        taker = res.account;
+      } catch (err: any) {
+        throw new Error(err?.message || "Please connect MetaMask first to settle this order.");
       }
+    }
+
+    try {
+      await settleOrderWithZkTlsProof(
+        client,
+        taker as `0x${string}`,
+        order.key,
+        order.data,
+        zkBundle
+      );
+      await fetchOrders();
     } catch (e) {
       console.warn("Live settlement fell back to interactive state:", e);
       const settledEntity: P2POrderEntity = {
@@ -193,6 +268,7 @@ export default function Home() {
         <Navbar
           walletAddress={walletAccount?.address || ""}
           onConnectWallet={handleConnectMetaMask}
+          onDisconnectWallet={handleDisconnectMetaMask}
           isMetaMaskConnected={isMetaMask}
           orders={orders}
           wsBlock={wsStatus.latestBlock}
@@ -231,6 +307,7 @@ export default function Home() {
               <TradeExecutionPanel
                 onPostOrder={handlePostOrder}
                 walletAddress={walletAccount?.address || ""}
+                onConnectWallet={handleConnectMetaMask}
                 isSubmitting={isSubmitting}
                 selectedPrice={selectedBookPrice}
               />

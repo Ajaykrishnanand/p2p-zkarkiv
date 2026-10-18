@@ -22,6 +22,7 @@ interface NavbarProps {
   isJudgeDemoActive?: boolean;
   onToggleDemoMode?: () => void;
   onConnectWallet?: () => void;
+  onDisconnectWallet?: () => void;
   isMetaMaskConnected?: boolean;
   orders?: P2POrderEntity[];
   wsBlock?: string | null;
@@ -31,6 +32,7 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({
   walletAddress,
   onConnectWallet,
+  onDisconnectWallet,
   isMetaMaskConnected,
   orders = [],
   wsBlock,
@@ -196,25 +198,60 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Right Action Items */}
         <div className="flex items-center gap-3">
-          {/* Connect / Wallet Balance Pill */}
-          <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl p-1 text-xs">
+          {/* Connect MetaMask / Connected Wallet Pill */}
+          {!walletAddress ? (
             <button
               onClick={onConnectWallet}
-              className="flex items-center gap-1.5 px-3 py-1 text-slate-800 font-bold hover:bg-slate-100 rounded-lg transition-colors"
+              className="flex items-center gap-2 px-3.5 py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold text-xs rounded-xl shadow-sm hover:shadow transition-all active:scale-95 cursor-pointer"
             >
-              <Wallet className="w-3.5 h-3.5 text-blue-600" />
-              <span>{isMetaMaskConnected ? "MetaMask" : "Burner Signer"}:</span>
-              <span className="font-mono font-medium text-slate-600">{shortAddress}</span>
+              <svg className="w-4 h-4 shrink-0" viewBox="0 0 318.6 318.6" fill="none">
+                <path d="M274.1 35.5l-99.5 73.9L193.3 54.8z" fill="#E2761B" stroke="#E2761B" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M44.4 35.5l98.7 74.6-18.4-55.3z" fill="#E4761B" stroke="#E4761B" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M238.3 206.8l-28.5 43.1 58.6 16.2 16.7-58.8z" fill="#E4761B" stroke="#E4761B" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M34.9 207.3l16.6 58.8 58.6-16.2-28.5-43.1z" fill="#E4761B" stroke="#E4761B" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M107.5 137.9l-16.1 24.3 57.2 2.6-1.9-61.7z" fill="#E4761B" stroke="#E4761B" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M211.1 137.9l-39.6-35.4-1.3 62.3 57-2.6z" fill="#E4761B" stroke="#E4761B" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M109.9 249.9l36.9-18.1-31.9-24.8z" fill="#E4761B" stroke="#E4761B" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M171.8 231.8l36.9 18.1-5-42.9z" fill="#E4761B" stroke="#E4761B" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M208.7 249.9l-36.9-18.1 3.2 24.5.4 10.5 43.9-3.9z" fill="#D7C1B3" stroke="#D7C1B3" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M106.3 262.9l43.9 3.9.4-10.5 3.2-24.5-36.9 18.1z" fill="#D7C1B3" stroke="#D7C1B3" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M149.2 189.7l-41.2-1.8-25.7 38.8 38.6-.2z" fill="#233447" stroke="#233447" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M169.4 189.7l28.3 36.8 38.6.2-25.7-38.8z" fill="#233447" stroke="#233447" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M108 226.5l-38.6.2 3.7 13.1 36.9-18.1z" fill="#CD6116" stroke="#CD6116" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M211.1 226.7l-2 4.8 36.9 18.1 3.7-13.1z" fill="#CD6116" stroke="#CD6116" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M170.2 164.8l1.3-62.3 21.8-47.7-65.7.1 21.6 47.6-1.9 61.7 11.2 32.7.7.6.7-.6z" fill="#E4751F" stroke="#E4751F" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M148.8 197.5l-11.2-32.7-57.2-2.6 17.6 34.6 10.8 1.4z" fill="#F6851B" stroke="#F6851B" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M210.6 196.8l10.8-1.4 17.6-34.6-57 2.6-11.2 32.7z" fill="#F6851B" stroke="#F6851B" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <span>Connect MetaMask</span>
             </button>
+          ) : (
+            <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl p-1 text-xs shadow-2xs">
+              <div className="flex items-center gap-1.5 px-2.5 py-1 text-slate-800 font-bold">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-slate-500 text-[11px] font-semibold">MetaMask:</span>
+                <span className="font-mono text-slate-800 font-semibold">{shortAddress}</span>
+              </div>
 
-            <button
-              onClick={handleCopy}
-              className="p-1 hover:text-slate-900 text-slate-400 rounded transition-colors"
-              title="Copy Address"
-            >
-              {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-            </button>
-          </div>
+              <button
+                onClick={handleCopy}
+                className="p-1 hover:text-slate-900 text-slate-400 rounded transition-colors"
+                title="Copy Address"
+              >
+                {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+              </button>
+
+              {onDisconnectWallet && (
+                <button
+                  onClick={onDisconnectWallet}
+                  className="ml-1 px-2 py-0.5 text-[10px] font-semibold text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors cursor-pointer"
+                  title="Disconnect MetaMask"
+                >
+                  Disconnect
+                </button>
+              )}
+            </div>
+          )}
 
           {/* How to Use Guide Link */}
           <a
