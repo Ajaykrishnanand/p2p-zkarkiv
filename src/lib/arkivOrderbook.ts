@@ -169,8 +169,10 @@ export async function createP2POrder(
       } catch (e) {
         // continue polling
       }
-      await new Promise((r) => setTimeout(r, 2000));
+      await new Promise((r) => setTimeout(r, 1500));
     }
+    // Fallback: resolve after timeout so button is never permanently stuck
+    resolve(null);
   });
 
   return await Promise.race([createPromise, pollPromise]);

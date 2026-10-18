@@ -76,7 +76,10 @@ export async function getConnectedBrowserAccount(): Promise<{ account: `0x${stri
       chain: tiramisu,
       transport: custom(ethereum),
       account,
+      pollingInterval: 1000,
     });
+    // Fast-path receipt resolution: bypasses MetaMask internal block delay and queries Arkiv RPC directly (<1s)
+    (client as any).waitForTransactionReceipt = (args: any) => publicClient.waitForTransactionReceipt(args);
     return { account, client };
   } catch (e) {
     console.warn("Passive MetaMask account check:", e);
@@ -109,7 +112,10 @@ export async function getBrowserWalletClient() {
     chain: tiramisu,
     transport: custom(ethereum),
     account,
+    pollingInterval: 1000,
   });
+  // Fast-path receipt resolution: bypasses MetaMask internal block delay and queries Arkiv RPC directly (<1s)
+  (client as any).waitForTransactionReceipt = (args: any) => publicClient.waitForTransactionReceipt(args);
 
   return { account, client };
 }
