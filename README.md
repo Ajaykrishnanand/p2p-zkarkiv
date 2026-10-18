@@ -47,8 +47,8 @@ Instead of uploading easily forged screenshots or leaking full bank statements, 
 
 ## 3. Mandatory Gate Files
 
-1. **[Arkiv Schema Specification (`arkiv/schema.md`)](file:///Users/trymbakmahant/Projects/Hackathon/Devfolio/p2parkiv/arkiv/schema.md):** Complete indexed attribute types (`str`, `u256`, `bool`), payload JSON schemas, and TTL lifecycle policies.
-2. **[Developer Friction Report (`arkiv/friction.md`)](file:///Users/trymbakmahant/Projects/Hackathon/Devfolio/p2parkiv/arkiv/friction.md):** 5 detailed, reproducible friction points with `@arkiv-network/sdk` v0.8.1 on Tiramisu Testnet.
+1. **[Arkiv Schema Specification (`arkiv/schema.md`)](arkiv/schema.md):** Complete indexed attribute types (`str`, `u256`, `bool`), payload JSON schemas, and TTL lifecycle policies.
+2. **[Developer Friction Report (`arkiv/friction.md`)](arkiv/friction.md):** 5 detailed, reproducible friction points with `@arkiv-network/sdk` v0.8.1 on Tiramisu Testnet.
 
 ---
 
