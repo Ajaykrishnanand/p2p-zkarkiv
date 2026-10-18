@@ -38,32 +38,45 @@ export const Navbar: React.FC<NavbarProps> = ({
 }) => {
   const [copied, setCopied] = useState<boolean>(false);
 
-  // Compute live 24h stats directly from on-chain Arkiv entities
-  const { currentPrice, high24h, low24h, volumeUsdc, turnoverInr } = useMemo(() => {
-    const defaultRate = 87.5;
+  // Compute live 24h stats strictly from on-chain Arkiv entities (zero fake mock data)
+  const { currentPrice, high24h, low24h, volumeUsdc, turnoverInr, priceChangePct } = useMemo(() => {
     if (!orders || orders.length === 0) {
       return {
-        currentPrice: defaultRate,
-        high24h: 88.2,
-        low24h: 86.4,
-        volumeUsdc: 298276.82,
-        turnoverInr: 24876213.56,
+        currentPrice: null,
+        high24h: null,
+        low24h: null,
+        volumeUsdc: 0,
+        turnoverInr: 0,
+        priceChangePct: 0,
       };
     }
 
-    const rates = orders.map((o) => Number(o.attributes?.rate || defaultRate));
-    const inrs = orders.map((o) => Number(o.attributes?.amountInr || 5000));
-    const usdcs = orders.map((o) => Number(o.data?.usdcAmount || 57.14));
+    const rates = orders
+      .map((o) => Number(o.attributes?.rate))
+      .filter((r) => !isNaN(r) && r > 0);
+    const inrs = orders
+      .map((o) => Number(o.attributes?.amountInr || 0))
+      .filter((i) => !isNaN(i));
+    const usdcs = orders
+      .map((o) => Number(o.data?.usdcAmount || 0))
+      .filter((u) => !isNaN(u));
 
     const totalInr = inrs.reduce((a, b) => a + b, 0);
     const totalUsdc = usdcs.reduce((a, b) => a + b, 0);
+    const latestPrice = rates[0] || null;
+    const oldestPrice = rates[rates.length - 1] || latestPrice;
+    const change =
+      latestPrice && oldestPrice && oldestPrice > 0
+        ? ((latestPrice - oldestPrice) / oldestPrice) * 100
+        : 0;
 
     return {
-      currentPrice: rates[0] || defaultRate,
-      high24h: Math.max(...rates, defaultRate),
-      low24h: Math.min(...rates, defaultRate),
-      volumeUsdc: Math.max(totalUsdc, 298276.82),
-      turnoverInr: Math.max(totalInr, 24876213.56),
+      currentPrice: latestPrice,
+      high24h: rates.length > 0 ? Math.max(...rates) : null,
+      low24h: rates.length > 0 ? Math.min(...rates) : null,
+      volumeUsdc: totalUsdc,
+      turnoverInr: totalInr,
+      priceChangePct: change,
     };
   }, [orders]);
 
@@ -144,33 +157,39 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Live Price Ticker Display */}
           <div className="flex items-baseline gap-2 pl-2">
-            <span className="text-2xl font-extrabold text-emerald-600 font-mono tracking-tight">
-              ₹{currentPrice.toFixed(2)}
+            <span className="text-2xl font-extrabold text-slate-900 font-mono tracking-tight">
+              {currentPrice !== null ? `₹${currentPrice.toFixed(2)}` : "₹--"}
             </span>
-            <div className="flex items-center text-xs font-bold text-emerald-600 gap-0.5">
-              <ArrowUpRight className="w-3.5 h-3.5" />
-              <span>+2.78%</span>
-              <span className="text-[10px] text-slate-400 font-normal ml-0.5">24h change</span>
-            </div>
+            {currentPrice !== null ? (
+              <div className={`flex items-center text-xs font-bold gap-0.5 ${priceChangePct >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
+                <ArrowUpRight className={`w-3.5 h-3.5 ${priceChangePct < 0 ? "rotate-90 text-rose-600" : ""}`} />
+                <span>{priceChangePct >= 0 ? `+${priceChangePct.toFixed(2)}%` : `${priceChangePct.toFixed(2)}%`}</span>
+                <span className="text-[10px] text-slate-400 font-normal ml-0.5">24h change</span>
+              </div>
+            ) : (
+              <div className="flex items-center text-xs font-medium text-slate-400">
+                <span>0.00% 24h change</span>
+              </div>
+            )}
           </div>
 
           {/* 24h Stats Columns */}
           <div className="hidden lg:flex items-center gap-6 border-l border-slate-100 pl-4 text-xs font-mono">
             <div>
               <div className="text-[10px] text-slate-400 uppercase font-sans">24h high</div>
-              <div className="font-bold text-slate-800">₹{high24h.toFixed(2)}</div>
+              <div className="font-bold text-slate-800">{high24h !== null ? `₹${high24h.toFixed(2)}` : "--"}</div>
             </div>
             <div>
               <div className="text-[10px] text-slate-400 uppercase font-sans">24h low</div>
-              <div className="font-bold text-slate-800">₹{low24h.toFixed(2)}</div>
+              <div className="font-bold text-slate-800">{low24h !== null ? `₹${low24h.toFixed(2)}` : "--"}</div>
             </div>
             <div>
               <div className="text-[10px] text-slate-400 uppercase font-sans">24h volume (USDC)</div>
-              <div className="font-bold text-slate-800">{volumeUsdc.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
+              <div className="font-bold text-slate-800">{volumeUsdc > 0 ? volumeUsdc.toLocaleString(undefined, { maximumFractionDigits: 0 }) : "0"}</div>
             </div>
             <div>
               <div className="text-[10px] text-slate-400 uppercase font-sans">24h turnover (INR)</div>
-              <div className="font-bold text-slate-800">₹{(turnoverInr / 100000).toFixed(1)} Lakh</div>
+              <div className="font-bold text-slate-800">{turnoverInr > 0 ? `₹${(turnoverInr / 100000).toFixed(1)} Lakh` : "₹0.0 Lakh"}</div>
             </div>
           </div>
         </div>
@@ -234,11 +253,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           </a>
 
           {/* Notification Bell */}
-          <button className="relative p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-50">
+          <button className="relative p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-colors">
             <Bell className="w-4 h-4" />
-            <span className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-rose-500 text-white text-[9px] font-bold flex items-center justify-center">
-              8
-            </span>
           </button>
 
           {/* Profile Avatar */}

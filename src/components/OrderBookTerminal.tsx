@@ -90,19 +90,23 @@ export const OrderBookTerminal: React.FC<OrderBookTerminalProps> = ({
     const calculatedMid =
       parsedAsks.length > 0 && parsedBids.length > 0
         ? (parsedAsks[parsedAsks.length - 1].price + parsedBids[0].price) / 2
-        : 87.5;
+        : parsedAsks.length > 0
+        ? parsedAsks[parsedAsks.length - 1].price
+        : parsedBids.length > 0
+        ? parsedBids[0].price
+        : null;
 
     const calculatedSpread =
       parsedAsks.length > 0 && parsedBids.length > 0
         ? Math.abs(parsedAsks[parsedAsks.length - 1].price - parsedBids[0].price)
-        : 0.15;
+        : null;
 
     const totalBids = parsedBids.reduce((acc, b) => acc + b.total, 0);
     const totalAsks = parsedAsks.reduce((acc, a) => acc + a.total, 0);
-    const ratio =
-      totalBids + totalAsks > 0
-        ? Math.round((totalBids / (totalBids + totalAsks)) * 100)
-        : 50;
+    const hasLiquidity = totalBids + totalAsks > 0;
+    const ratio = hasLiquidity
+      ? Math.round((totalBids / (totalBids + totalAsks)) * 100)
+      : null;
 
     return {
       asks: parsedAsks.slice(0, 5),
@@ -200,22 +204,28 @@ export const OrderBookTerminal: React.FC<OrderBookTerminalProps> = ({
           {/* Dynamic Mid-Price Divider Bar */}
           <div className="my-1.5 py-1.5 px-2 bg-slate-50 border-y border-slate-100 rounded flex items-center justify-between">
             <div className="flex items-center gap-1.5">
-              <span className="text-sm font-bold text-emerald-600 font-mono">
-                ₹{midPrice.toFixed(2)}
+              <span className="text-sm font-bold text-slate-800 font-mono">
+                {midPrice !== null ? `₹${midPrice.toFixed(2)}` : "--"}
               </span>
-              <ArrowUpRight className="w-3.5 h-3.5 text-emerald-600" />
-              <span className="text-[10px] text-slate-400 font-medium">On-Chain Mid</span>
+              {midPrice !== null && <ArrowUpRight className="w-3.5 h-3.5 text-emerald-600" />}
+              <span className="text-[10px] text-slate-400 font-medium">
+                {midPrice !== null ? "On-Chain Mid" : "No Orders"}
+              </span>
             </div>
 
             {/* Depth ratio bar */}
-            <div className="flex items-center gap-1 text-[10px] font-mono">
-              <span className="text-emerald-600 font-bold">{bidRatio}%</span>
-              <div className="w-12 h-1.5 bg-slate-200 rounded-full flex overflow-hidden">
-                <div className="bg-emerald-500 h-full" style={{ width: `${bidRatio}%` }} />
-                <div className="bg-rose-500 h-full" style={{ width: `${100 - bidRatio}%` }} />
+            {bidRatio !== null ? (
+              <div className="flex items-center gap-1 text-[10px] font-mono">
+                <span className="text-emerald-600 font-bold">{bidRatio}%</span>
+                <div className="w-12 h-1.5 bg-slate-200 rounded-full flex overflow-hidden">
+                  <div className="bg-emerald-500 h-full" style={{ width: `${bidRatio}%` }} />
+                  <div className="bg-rose-500 h-full" style={{ width: `${100 - bidRatio}%` }} />
+                </div>
+                <span className="text-rose-500 font-bold">{100 - bidRatio}%</span>
               </div>
-              <span className="text-rose-500 font-bold">{100 - bidRatio}%</span>
-            </div>
+            ) : (
+              <span className="text-[10px] text-slate-400 font-mono">Awaiting Liquidity</span>
+            )}
           </div>
 
           {/* BIDS (On-Chain Buy/Bid Liquidity) */}
@@ -287,7 +297,7 @@ export const OrderBookTerminal: React.FC<OrderBookTerminalProps> = ({
       {/* Footer Info */}
       <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400 font-mono">
         <span>Arkiv queryEntities</span>
-        <span className="text-emerald-600 font-medium">Spread: ₹{spread.toFixed(2)}</span>
+        <span className="text-slate-600 font-medium">Spread: {spread !== null ? `₹${spread.toFixed(2)}` : "--"}</span>
       </div>
     </div>
   );

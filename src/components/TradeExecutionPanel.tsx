@@ -17,6 +17,8 @@ import {
 } from "lucide-react";
 import { isSyntheticUpi, generateSyntheticUpi } from "@/lib/syntheticGuard";
 import { useArkivWebSocket } from "@/lib/useArkivWebSocket";
+import { publicClient } from "@/lib/arkivClient";
+import { formatEther } from "viem";
 
 interface TradeExecutionPanelProps {
   onPostOrder: (params: {
@@ -41,9 +43,35 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
   const [limitPrice, setLimitPrice] = useState<number>(selectedPrice || 87.5);
   const [amountInr, setAmountInr] = useState<number>(5000);
   const [percentSlider, setPercentSlider] = useState<number>(50);
-  const [syntheticAlias, setSyntheticAlias] = useState<string>("arjun.synth@okhdfc");
+  const [syntheticAlias, setSyntheticAlias] = useState<string>("");
   const [ttlMinutes, setTtlMinutes] = useState<number>(60);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [onChainBalance, setOnChainBalance] = useState<string | null>(null);
+
+  // Fetch real on-chain balance from Arkiv Tiramisu DB-Chain
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchBalance() {
+      if (!walletAddress) {
+        setOnChainBalance(null);
+        return;
+      }
+      try {
+        const bal = await publicClient.getBalance({ address: walletAddress as `0x${string}` });
+        if (isMounted) {
+          setOnChainBalance(Number(formatEther(bal)).toFixed(4));
+        }
+      } catch (err) {
+        console.warn("Failed to query on-chain balance:", err);
+      }
+    }
+    fetchBalance();
+    const interval = setInterval(fetchBalance, 8000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [walletAddress]);
 
   // Live WebSocket stream status from Arkiv DB-Chain
   const wsStatus = useArkivWebSocket();
@@ -130,34 +158,11 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
     }
   };
 
-  // Helper to simulate a failed transaction for demo/testing purposes
-  const handleSimulateFailedTx = () => {
-    const failurePayload = {
-      reason:
-        "The total cost (gas * gas fee + value) of executing this transaction exceeds the balance of the account: insufficient funds for gas * price + value on Arkiv Tiramisu (7738577).",
-      code: "INSUFFICIENT_FUNDS_OR_REVERT",
-      timestamp: new Date().toLocaleTimeString(),
-      sender: walletAddress || "0x79b4355555a6DB2811FbE7DC38b9Ff644F2fa581",
-    };
-
-    setFailedTx(failurePayload);
-
-    // Also trigger Webhook event
-    fetch("/api/arkiv/webhook", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-arkiv-source": "simulation" },
-      body: JSON.stringify({
-        event: "TRANSACTION_FAILED_SIMULATION",
-        ...failurePayload,
-      }),
-    }).catch(() => {});
-  };
-
   return (
     <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex flex-col justify-between text-xs min-h-[640px] h-auto">
       <form onSubmit={handleSubmit} className="flex-1 flex flex-col justify-between">
         <div className="space-y-3.5">
-          {/* Header Title with Test Fail State option */}
+          {/* Header Title */}
           <div className="flex items-center justify-between pb-2 border-b border-slate-100">
             <div className="flex items-center gap-2">
               <span className="font-bold text-slate-800 text-sm">Trade</span>
@@ -165,16 +170,6 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
                 createEntity
               </span>
             </div>
-
-            {/* Quick Test Fail Simulator button */}
-            <button
-              type="button"
-              onClick={handleSimulateFailedTx}
-              className="text-[10px] font-mono text-rose-600 hover:text-rose-800 bg-rose-50 hover:bg-rose-100 px-2 py-0.5 rounded border border-rose-200 transition-colors"
-              title="Click to simulate how a failed transaction displays at the bottom of the Buy order"
-            >
-              🧪 Test Fail State
-            </button>
           </div>
 
           {/* Buy / Sell Toggle Tabs */}
@@ -221,11 +216,11 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
             </select>
           </div>
 
-          {/* Available Balance Row */}
+          {/* Available Real On-Chain Balance Row */}
           <div className="flex items-center justify-between text-[11px] text-slate-500">
             <span>Available balance:</span>
             <div className="flex items-center gap-1 font-mono font-bold text-slate-800">
-              <span>23,946 USDC</span>
+              <span>{onChainBalance !== null ? `${onChainBalance} GLM` : "-- GLM"}</span>
               <a
                 href="https://hub.arkiv.network/faucet"
                 target="_blank"
@@ -329,12 +324,13 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
               type="text"
               value={syntheticAlias}
               onChange={(e) => setSyntheticAlias(e.target.value)}
+              placeholder="e.g. trader.synth@okhdfc"
               className={`w-full bg-slate-50 border rounded-lg px-3 py-1.5 text-xs font-mono text-slate-800 focus:outline-none ${
-                isAliasValid ? "border-slate-200 focus:border-emerald-500" : "border-rose-400"
+                syntheticAlias.length === 0 || isAliasValid ? "border-slate-200 focus:border-emerald-500" : "border-rose-400"
               }`}
               required
             />
-            {!isAliasValid && (
+            {syntheticAlias.length > 0 && !isAliasValid && (
               <p className="text-[10px] text-rose-500 mt-0.5">
                 Zero-PII Gate: Must match *.synth@bank
               </p>

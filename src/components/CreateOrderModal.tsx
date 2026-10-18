@@ -24,7 +24,7 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
 }) => {
   const [amountInr, setAmountInr] = useState<number>(5000);
   const [rateInr, setRateInr] = useState<number>(87);
-  const [syntheticAlias, setSyntheticAlias] = useState<string>("arjun.synth@okhdfc");
+  const [syntheticAlias, setSyntheticAlias] = useState<string>("");
   const [ttlMinutes, setTtlMinutes] = useState<number>(60);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -168,16 +168,16 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
               type="text"
               value={syntheticAlias}
               onChange={(e) => setSyntheticAlias(e.target.value)}
-              placeholder="e.g. rahul.synth@okaxis"
+              placeholder="e.g. user.synth@okhdfc"
               className={`w-full bg-zinc-900 border rounded-lg px-3 py-2 text-sm text-white font-mono focus:outline-none ${
-                isAliasValid
-                  ? "border-emerald-500/50 focus:border-emerald-400"
+                syntheticAlias.length === 0 || isAliasValid
+                  ? "border-zinc-800 focus:border-emerald-400"
                   : "border-rose-500/50 focus:border-rose-400"
               }`}
               required
             />
 
-            {!isAliasValid && (
+            {syntheticAlias.length > 0 && !isAliasValid && (
               <p className="text-[11px] text-rose-400 flex items-center gap-1 mt-1">
                 <AlertTriangle className="w-3.5 h-3.5" />
                 Zero-PII Gate: Must match *.synth@bank (real phone/UPI forbidden)
