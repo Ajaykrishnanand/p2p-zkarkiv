@@ -133,27 +133,33 @@ export async function getMakerEscrowDepositsOnChain(makerAddress: string): Promi
     );
 
     const currentBlock = await baseSepoliaPublicClient.getBlockNumber();
-    let totalDeposited = 0n;
+    const chunks: { fromBlock: bigint; toBlock: bigint }[] = [];
 
-    // Scan recent 1500 blocks in 190-block chunks (Base RPC max range is 200)
-    for (let b = currentBlock; b >= currentBlock - 1500n; b -= 190n) {
-      const fromBlock = b - 190n;
-      try {
-        const logs = await baseSepoliaPublicClient.getLogs({
-          address: BASE_SEPOLIA_USDC_ADDRESS,
-          event: transferAbi,
-          args: { from: checkMaker, to: BASE_SEPOLIA_ESCROW_ADDRESS },
-          fromBlock,
-          toBlock: b,
-        });
-        for (const log of logs) {
-          if (log.args.value) {
-            totalDeposited += log.args.value;
-          }
+    // Scan recent 5000 blocks in 190-block chunks in parallel (Base RPC limit is 200)
+    for (let b = currentBlock; b >= currentBlock - 5000n; b -= 190n) {
+      chunks.push({ fromBlock: b - 190n, toBlock: b });
+    }
+
+    const chunkResults = await Promise.all(
+      chunks.map((c) =>
+        baseSepoliaPublicClient
+          .getLogs({
+            address: BASE_SEPOLIA_USDC_ADDRESS,
+            event: transferAbi,
+            args: { from: checkMaker, to: BASE_SEPOLIA_ESCROW_ADDRESS },
+            fromBlock: c.fromBlock,
+            toBlock: c.toBlock,
+          })
+          .catch(() => [])
+      )
+    );
+
+    let totalDeposited = 0n;
+    for (const logs of chunkResults) {
+      for (const log of logs) {
+        if (log.args.value) {
+          totalDeposited += log.args.value;
         }
-      } catch (subErr) {
-        // Continue scanning other chunks if one fails
-        console.warn("Sub-block query warning:", subErr);
       }
     }
 

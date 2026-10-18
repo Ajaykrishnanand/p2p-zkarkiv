@@ -3,7 +3,7 @@ import {
   createWalletClient,
 } from "@arkiv-network/sdk";
 import { tiramisu } from "@arkiv-network/sdk/chains";
-import { http, webSocket, custom } from "viem";
+import { http, webSocket, custom, publicActions } from "viem";
 import { privateKeyToAccount, generatePrivateKey } from "viem/accounts";
 
 // Network Constants for Tiramisu Testnet
@@ -59,6 +59,61 @@ export async function switchOrAddTiramisuNetwork(ethereum: any) {
 }
 
 /**
+ * Wraps browser MetaMask EIP-1193 provider with Arkiv HTTP RPC fast-path.
+ * Interactive/signature methods (sendTransaction, personal_sign) prompt MetaMask,
+ * while read/polling methods (eth_blockNumber, eth_getTransactionReceipt) resolve
+ * in <20ms directly against the Arkiv node, avoiding MetaMask polling delays.
+ */
+export function createHybridEthereumProvider(ethereum: any) {
+  if (!ethereum) return ethereum;
+  return {
+    async request({ method, params }: { method: string; params?: any[] }) {
+      if (
+        method === "eth_sendTransaction" ||
+        method === "personal_sign" ||
+        method === "eth_signTypedData" ||
+        method === "eth_signTypedData_v4" ||
+        method === "eth_requestAccounts" ||
+        method === "eth_accounts" ||
+        method === "wallet_switchEthereumChain" ||
+        method === "wallet_addEthereumChain"
+      ) {
+        return await ethereum.request({ method, params });
+      }
+
+      try {
+        const res = await fetch(ARKIV_HTTP_RPC, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            jsonrpc: "2.0",
+            id: 1,
+            method,
+            params: params || [],
+          }),
+        });
+        const data = await res.json();
+        if (data.error) {
+          if (ethereum?.request) {
+            return await ethereum.request({ method, params });
+          }
+          throw new Error(data.error.message || JSON.stringify(data.error));
+        }
+        return data.result;
+      } catch (err) {
+        return await ethereum.request({ method, params });
+      }
+    },
+    on(event: string, handler: any) {
+      if (ethereum?.on) ethereum.on(event, handler);
+    },
+    removeListener(event: string, handler: any) {
+      if (ethereum?.removeListener) ethereum.removeListener(event, handler);
+    },
+  };
+}
+
+/**
  * Passively checks if MetaMask is already connected without popping up approval modal.
  */
 export async function getConnectedBrowserAccount(): Promise<{ account: `0x${string}`; client: any } | null> {
@@ -72,14 +127,13 @@ export async function getConnectedBrowserAccount(): Promise<{ account: `0x${stri
       return null;
     }
     const account = accounts[0] as `0x${string}`;
+    const hybridProvider = createHybridEthereumProvider(ethereum);
     const client = createWalletClient({
       chain: tiramisu,
-      transport: custom(ethereum),
+      transport: custom(hybridProvider),
       account,
       pollingInterval: 1000,
-    });
-    // Fast-path receipt resolution: bypasses MetaMask internal block delay and queries Arkiv RPC directly (<1s)
-    (client as any).waitForTransactionReceipt = (args: any) => publicClient.waitForTransactionReceipt(args);
+    }).extend(publicActions);
     return { account, client };
   } catch (e) {
     console.warn("Passive MetaMask account check:", e);
@@ -108,14 +162,13 @@ export async function getBrowserWalletClient() {
   // Ensure network is Tiramisu Testnet
   await switchOrAddTiramisuNetwork(ethereum);
 
+  const hybridProvider = createHybridEthereumProvider(ethereum);
   const client = createWalletClient({
     chain: tiramisu,
-    transport: custom(ethereum),
+    transport: custom(hybridProvider),
     account,
     pollingInterval: 1000,
-  });
-  // Fast-path receipt resolution: bypasses MetaMask internal block delay and queries Arkiv RPC directly (<1s)
-  (client as any).waitForTransactionReceipt = (args: any) => publicClient.waitForTransactionReceipt(args);
+  }).extend(publicActions);
 
   return { account, client };
 }

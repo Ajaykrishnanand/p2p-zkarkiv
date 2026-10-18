@@ -36,6 +36,8 @@ interface TradeExecutionPanelProps {
   onConnectWallet?: () => void;
   onOpenEscrowModal?: () => void;
   depositedEscrowUsdc?: number;
+  lockedEscrowUsdc?: number;
+  grossEscrowDepositedUsdc?: number;
   onRefreshEscrow?: () => void;
   isRefreshingEscrow?: boolean;
 }
@@ -48,6 +50,8 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
   onConnectWallet,
   onOpenEscrowModal,
   depositedEscrowUsdc = 0,
+  lockedEscrowUsdc = 0,
+  grossEscrowDepositedUsdc = 0,
   onRefreshEscrow,
   isRefreshingEscrow = false,
 }) => {
@@ -269,9 +273,9 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
                   </div>
                   <div>
                     <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block leading-none">
-                      Deposited Escrow Collateral
+                      Available Escrow Collateral
                     </span>
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 mt-0.5">
                       <span className="text-sm font-extrabold text-blue-950 font-mono">
                         {escrowAvailable.toFixed(2)} USDC
                       </span>
@@ -287,6 +291,11 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
                         </button>
                       )}
                     </div>
+                    {lockedEscrowUsdc > 0 && (
+                      <span className="text-[10px] text-amber-700 font-semibold block leading-tight mt-0.5">
+                        🔒 {lockedEscrowUsdc.toFixed(2)} USDC locked in active orders (60m TTL)
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -299,7 +308,7 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
                         setAmountInr(maxInr);
                       }}
                       className="px-2 py-1 bg-white hover:bg-slate-50 text-blue-700 border border-blue-200 font-bold rounded-lg text-[10px] transition-colors cursor-pointer shadow-2xs"
-                      title="Use exact deposited escrow balance"
+                      title="Use exact available escrow balance"
                     >
                       MAX
                     </button>
@@ -338,7 +347,15 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
                 <div className="p-2 rounded-xl bg-amber-100/70 border border-amber-200 text-amber-900 text-[11px] flex items-start gap-1.5 leading-tight">
                   <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
                   <span>
-                    <strong>0.00 USDC deposited:</strong> Deposit USDC to Base Sepolia Escrow before posting a sell order.
+                    {lockedEscrowUsdc > 0 ? (
+                      <>
+                        <strong>All escrow collateral ({lockedEscrowUsdc.toFixed(2)} USDC) is locked</strong> in active orders on Arkiv DB-Chain for their 60-min TTL. Deposit more USDC to Base Sepolia Escrow to post another sell order.
+                      </>
+                    ) : (
+                      <>
+                        <strong>0.00 USDC available in escrow:</strong> Deposit USDC to Base Sepolia Escrow before posting a sell order.
+                      </>
+                    )}
                   </span>
                 </div>
               ) : isSellBlockedExceedsEscrow ? (
@@ -623,7 +640,11 @@ export const TradeExecutionPanel: React.FC<TradeExecutionPanelProps> = ({
               className="w-full py-3.5 rounded-xl font-bold text-sm text-white bg-blue-600 hover:bg-blue-700 shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer shadow-blue-600/20 active:scale-[0.99]"
             >
               <Lock className="w-4 h-4" />
-              <span>Deposit Escrow Collateral to Sell</span>
+              <span>
+                {lockedEscrowUsdc > 0
+                  ? `All Escrow Locked (${lockedEscrowUsdc.toFixed(2)} USDC) - Deposit More`
+                  : "Deposit Escrow Collateral to Sell"}
+              </span>
             </button>
           ) : isSell && isSellBlockedExceedsEscrow ? (
             <button

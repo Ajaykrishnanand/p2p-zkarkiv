@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Plus,
   ArrowRight,
@@ -53,13 +53,13 @@ export default function Home() {
   const [inspectedEntity, setInspectedEntity] = useState<P2POrderEntity | null>(null);
   const [isUpiSimulatorOpen, setIsUpiSimulatorOpen] = useState<boolean>(false);
   const [isEscrowModalOpen, setIsEscrowModalOpen] = useState<boolean>(false);
-  const [depositedEscrowUsdc, setDepositedEscrowUsdc] = useState<number>(0);
+  const [grossDepositedEscrowUsdc, setGrossDepositedEscrowUsdc] = useState<number>(0);
   const [isRefreshingEscrow, setIsRefreshingEscrow] = useState<boolean>(false);
 
   // Sync deposited escrow balance from localStorage and on-chain Base Sepolia logs
   const syncEscrowBalance = useCallback(async () => {
     if (!walletAccount?.address) {
-      setDepositedEscrowUsdc(0);
+      setGrossDepositedEscrowUsdc(0);
       return;
     }
     const addrKey = walletAccount.address.toLowerCase();
@@ -67,7 +67,7 @@ export default function Home() {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem(`zkupi_escrow_deposit_${addrKey}`);
       if (saved) {
-        setDepositedEscrowUsdc(parseFloat(saved) || 0);
+        setGrossDepositedEscrowUsdc(parseFloat(saved) || 0);
       }
     }
 
@@ -76,7 +76,7 @@ export default function Home() {
     try {
       const onChainAmount = await getMakerEscrowDepositsOnChain(walletAccount.address);
       if (onChainAmount > 0) {
-        setDepositedEscrowUsdc((prev) => {
+        setGrossDepositedEscrowUsdc((prev) => {
           const finalVal = Math.max(prev, onChainAmount);
           if (typeof window !== "undefined") {
             localStorage.setItem(`zkupi_escrow_deposit_${addrKey}`, finalVal.toString());
@@ -99,7 +99,7 @@ export default function Home() {
 
   // Handler for successful escrow deposits
   const handleEscrowDepositSuccess = (amountUsdc: number) => {
-    setDepositedEscrowUsdc((prev) => {
+    setGrossDepositedEscrowUsdc((prev) => {
       const next = Number((prev + amountUsdc).toFixed(2));
       if (typeof window !== "undefined" && walletAccount?.address) {
         localStorage.setItem(`zkupi_escrow_deposit_${walletAccount.address.toLowerCase()}`, next.toString());
@@ -107,6 +107,28 @@ export default function Home() {
       return next;
     });
   };
+
+  // Dynamically calculate USDC locked in active orders on Arkiv DB-Chain
+  const lockedEscrowUsdc = useMemo(() => {
+    if (!walletAccount?.address) return 0;
+    const addr = walletAccount.address.toLowerCase();
+    const activeOrders = orders.filter((o) => {
+      const isMaker = o.data?.makerAddress?.toLowerCase() === addr;
+      const rawStatus = typeof o.attributes?.status === "object" ? (o.attributes.status as any).value : o.attributes?.status || "OPEN";
+      const status = String(rawStatus).toUpperCase();
+      return isMaker && (status === "OPEN" || status === "LOCKED");
+    });
+    const total = activeOrders.reduce((sum, o) => {
+      const amt = parseFloat(o.data?.usdcAmount || "0");
+      return sum + (isNaN(amt) ? 0 : amt);
+    }, 0);
+    return Number(total.toFixed(2));
+  }, [orders, walletAccount?.address]);
+
+  // Available escrow collateral for new sell orders: gross deposits minus locked amounts
+  const availableEscrowUsdc = useMemo(() => {
+    return Math.max(0, Number((grossDepositedEscrowUsdc - lockedEscrowUsdc).toFixed(2)));
+  }, [grossDepositedEscrowUsdc, lockedEscrowUsdc]);
 
   // Check existing MetaMask authorization on mount and listen to account changes
   useEffect(() => {
@@ -185,14 +207,28 @@ export default function Home() {
   const fetchOrders = useCallback(async () => {
     try {
       setIsLoading(true);
-      const res = await queryOpenInrOrders();
+      // Try local API route first, fallback to client direct RPC
+      let res: P2POrderEntity[] = [];
+      try {
+        const apiRes = await fetch("/api/arkiv/orders", { cache: "no-store" });
+        if (apiRes.ok) {
+          const json = await apiRes.json();
+          if (json.orders && Array.isArray(json.orders) && json.orders.length > 0) {
+            res = json.orders;
+          }
+        }
+      } catch {}
+
+      if (!res || res.length === 0) {
+        res = await queryOpenInrOrders(walletAccount?.address);
+      }
       setOrders(res);
     } catch (err) {
       console.warn("Failed to query Arkiv entities:", err);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [walletAccount?.address]);
 
   // Real-time Arkiv WebSocket stream: auto-refreshes orderbook when new block is mined
   const wsStatus = useArkivWebSocket(
@@ -230,16 +266,6 @@ export default function Home() {
         ttlMinutes: params.ttlMinutes,
       });
       await fetchOrders();
-
-      // Deduct used escrow collateral if seller was utilizing deposited escrow
-      const usdcSold = params.amountInr / params.rateInrPerUsdc;
-      setDepositedEscrowUsdc((prev) => {
-        const next = Math.max(0, Number((prev - usdcSold).toFixed(2)));
-        if (typeof window !== "undefined" && walletAccount?.address) {
-          localStorage.setItem(`zkupi_escrow_deposit_${walletAccount.address.toLowerCase()}`, next.toString());
-        }
-        return next;
-      });
     } catch (err: any) {
       console.warn("Live order creation failed on Arkiv DB-Chain:", err);
       // Re-throw so TradeExecutionPanel displays the failed transaction card
@@ -375,7 +401,9 @@ export default function Home() {
                 onOpenEscrowModal={() => setIsEscrowModalOpen(true)}
                 isSubmitting={isSubmitting}
                 selectedPrice={selectedBookPrice}
-                depositedEscrowUsdc={depositedEscrowUsdc}
+                depositedEscrowUsdc={availableEscrowUsdc}
+                lockedEscrowUsdc={lockedEscrowUsdc}
+                grossEscrowDepositedUsdc={grossDepositedEscrowUsdc}
                 onRefreshEscrow={syncEscrowBalance}
                 isRefreshingEscrow={isRefreshingEscrow}
               />
