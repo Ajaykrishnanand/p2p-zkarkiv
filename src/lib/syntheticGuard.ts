@@ -45,7 +45,7 @@ export function assertSyntheticUpi(alias: string): void {
 
   if (!clean.includes(".synth@") && !clean.includes(".demo@")) {
     throw new RealPiiBlockedError(
-      `Invalid UPI alias "${alias}". All UPI handles on zkUPI-Arkiv must use the synthetic routing format: <name>.synth@<bank> (e.g., rahul.synth@okaxis)`
+      `Invalid UPI alias "${alias}". All UPI handles on PhantomUPI must use the synthetic routing format: <name>.synth@<bank> (e.g., rahul.synth@okaxis)`
     );
   }
 

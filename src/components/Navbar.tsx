@@ -138,9 +138,16 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       {/* Main Pro-Exchange Ticker Header */}
       <div className="px-4 py-2.5 flex items-center justify-between gap-3 w-full">
-        {/* Left: Search input */}
+        {/* Left: Brand & Search input */}
         <div className="flex items-center gap-3 min-w-0">
-          <div className="relative w-44 xl:w-56 hidden lg:block shrink-0">
+          <div className="flex items-center gap-2 pr-2 border-r border-slate-100">
+            <span className="font-extrabold text-slate-900 tracking-tight text-sm flex items-center gap-1">
+              <span className="text-slate-900 font-black">Phantom</span>
+              <span className="px-1.5 py-0.5 rounded-md bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-[10px] font-bold tracking-wider uppercase font-mono shadow-2xs">UPI</span>
+            </span>
+          </div>
+
+          <div className="relative w-40 xl:w-52 hidden lg:block shrink-0">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
             <input
               type="text"

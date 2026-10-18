@@ -1,4 +1,4 @@
-# zkUPI-Arkiv — Pitch Deck & Live Demo Runbook
+# PhantomUPI — Pitch Deck & Live Demo Runbook
 
 > **Censorship-Resistant, Zero-Knowledge P2P UPI-to-Crypto Orderbook on Arkiv DB-Chain**  
 > Built for the **Arkiv Global Tour Stop (Road to Devcon 8 Mumbai)**  
@@ -13,7 +13,7 @@
 
 | Attribute | Detail |
 | :--- | :--- |
-| **Project Name** | **zkUPI-Arkiv** |
+| **Project Name** | **PhantomUPI** |
 | **One-Line Pitch** | The first decentralized P2P crypto orderbook where Arkiv DB-Chain manages ephemeral 30-min escrow locks and client-side zkTLS proves Indian UPI bank payments without leaking bank statements or risking cybercrime liens. |
 | **Target Tracks** | 🏆 **Best Indian Use Case** ($2,000 USDC + Devcon 8 Ticket)<br>🛡️ **Censorship Resistance** ($750 USDC + Devcon 8 Ticket)<br>🔒 **Privacy** ($750 USDC + Devcon 8 Ticket) |
 | **Core Flow** | **Maker posts Sell Order** $\rightarrow$ **Funds locked in 30-min Escrow** $\rightarrow$ **Buyer pays via UPI Simulator** $\rightarrow$ **zkTLS proves payment authentic from bank** $\rightarrow$ **Escrow automatically releases USDC**. |
@@ -54,7 +54,7 @@
 
 ### Speaker Notes (30–45 Seconds):
 > *"Good morning, judges. In India today, UPI is king with 18 billion monthly transactions. But if you try to buy or sell crypto with UPI on centralized P2P desks, you are walking into a legal minefield. Centralized exchanges force you to expose your real UPI ID, and if any tainted money touches your account, your entire bank account gets frozen under cybercrime liens. Worse, when there is a dispute, you are forced to upload sensitive bank statements to offshore support desks.  
-> Why can’t we trade peer-to-peer where the crypto is locked safely in decentralized escrow, the buyer pays through UPI, and zero-knowledge TLS cryptographically proves that the bank approved the transfer without exposing a single line of your private statement? That is zkUPI-Arkiv."*
+> Why can’t we trade peer-to-peer where the crypto is locked safely in decentralized escrow, the buyer pays through UPI, and zero-knowledge TLS cryptographically proves that the bank approved the transfer without exposing a single line of your private statement? That is PhantomUPI."*
 
 ---
 
@@ -72,7 +72,7 @@
 
 ### Architectural Comparison Matrix:
 
-| Requirement | Centralized DB (Postgres/Firebase) | Decentralized Storage (IPFS/Arweave) | L1/L2 Calldata (Ethereum/Base) | **zkUPI on Arkiv DB-Chain (`@arkiv-network/sdk`)** |
+| Requirement | Centralized DB (Postgres/Firebase) | Decentralized Storage (IPFS/Arweave) | L1/L2 Calldata (Ethereum/Base) | **PhantomUPI on Arkiv DB-Chain (`@arkiv-network/sdk`)** |
 | :--- | :---: | :---: | :---: | :---: |
 | **Censorship Resistance** | ❌ Single point of failure; seized by injunction | ✅ Decentralized nodes | ✅ Decentralized consensus | **✅ Decentralized validator DB-chain** |
 | **Zero-PII Storage** | ❌ Cleartext database leaks | ⚠️ Public permanent blob leak | ❌ Public calldata leak | **✅ 100% Synthetic Payee Protocol Guard** |
@@ -93,7 +93,7 @@
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
-## Slide 3: The 4-Step zkUPI-Arkiv Lifecycle
+## Slide 3: The 4-Step PhantomUPI Lifecycle
 
 ### Visual Headline:
 > **Maker Lists Sell Order $\rightarrow$ 30-Min Escrow Lock $\rightarrow$ UPI Mobile Pay $\rightarrow$ zkTLS Proof Releases Crypto.**
@@ -193,7 +193,7 @@ sequenceDiagram
 
 ## Slide 5: Deep Implementation of 5 Core Arkiv SDK Features
 
-### How zkUPI-Arkiv Leverages `@arkiv-network/sdk`:
+### How PhantomUPI Leverages `@arkiv-network/sdk`:
 
 1. **`createEntity` with Composable Indexed Attributes:**
    - Stores the maker’s sell order with indexed attributes (`appId`, `entityType`, `status`, `fiatCurrency`, `amountInr`, `rate`, `zkVerified`) enabling instant sub-second orderbook querying:
@@ -398,7 +398,7 @@ contract P2PBaseSepoliaEscrow {
 * **Poseidon Nullifier Protection:** Prevents linkability and replay attacks across orders.
 
 ### Speaker Notes (30 Seconds):
-> *"zkUPI-Arkiv hits the center of the bullseye for all three prize tracks: It tackles the biggest real-world crypto problem in India, operates without a single point of censorship using Arkiv DB-Chain, and pioneers zero-knowledge privacy for retail fiat-to-crypto trading.  
+> *"PhantomUPI hits the center of the bullseye for all three prize tracks: It tackles the biggest real-world crypto problem in India, operates without a single point of censorship using Arkiv DB-Chain, and pioneers zero-knowledge privacy for retail fiat-to-crypto trading.  
 > Now, let's switch directly to the live demo on our website!"*
 
 ---
@@ -450,7 +450,7 @@ Before starting the live demonstration, ensure your MetaMask wallet has testnet 
    - Green pulse: `Arkiv Tiramisu Connected` (showing live block number `#7509xx`).
 
 > **Presenter Script:**  
-> *"Here is the live zkUPI-Arkiv application running on localhost. In the header, you can see real-time WebSocket connectivity directly to Arkiv Tiramisu DB-Chain with live block streaming."*
+> *"Here is the live PhantomUPI application running on localhost. In the header, you can see real-time WebSocket connectivity directly to Arkiv Tiramisu DB-Chain with live block streaming."*
 
 ---
 
@@ -624,7 +624,7 @@ Before starting the live demonstration, ensure your MetaMask wallet has testnet 
 
 ### Action 4.2: Concluding Pitch & Q&A
 > **Presenter Script:**  
-> *"In summary: zkUPI-Arkiv solves India's P2P crypto freeze crisis by combining Arkiv DB-Chain's high-speed ephemeral locks with client-side zkTLS privacy.  
+> *"In summary: PhantomUPI solves India's P2P crypto freeze crisis by combining Arkiv DB-Chain's high-speed ephemeral locks with client-side zkTLS privacy.  
 > Sellers get guaranteed non-custodial escrow on Base Sepolia.  
 > Buyers get instant crypto release with their ordinary UPI app.  
 > And nobody ever leaks a bank statement.  

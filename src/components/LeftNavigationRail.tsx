@@ -12,6 +12,7 @@ import {
   HelpCircle,
   ShieldCheck,
   Smartphone,
+  Ghost,
 } from "lucide-react";
 
 interface LeftNavigationRailProps {
@@ -36,10 +37,13 @@ export const LeftNavigationRail: React.FC<LeftNavigationRailProps> = ({
   return (
     <aside className="w-16 bg-white border-r border-slate-200 flex flex-col justify-between py-4 items-center shrink-0 min-h-screen select-none">
       <div className="flex flex-col items-center gap-6 w-full">
-        {/* Brand Logo at Top */}
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-emerald-500 p-0.5 flex items-center justify-center shadow-sm">
-          <div className="w-full h-full bg-white rounded-[10px] flex items-center justify-center">
-            <span className="text-blue-600 font-extrabold text-base tracking-tighter">zk</span>
+        {/* PhantomUPI Brand Logo at Top */}
+        <div
+          title="PhantomUPI — Censorship-Resistant ZK P2P on Arkiv"
+          className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-emerald-500 p-0.5 flex items-center justify-center shadow-md cursor-pointer hover:scale-105 transition-transform group"
+        >
+          <div className="w-full h-full bg-slate-900 rounded-[10px] flex items-center justify-center relative">
+            <Ghost className="w-5 h-5 text-emerald-400 group-hover:text-emerald-300 transition-colors" />
           </div>
         </div>
 

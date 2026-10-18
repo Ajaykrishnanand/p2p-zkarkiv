@@ -448,7 +448,7 @@ export default function Home() {
               <a href="https://docs.arkiv.network" target="_blank" rel="noreferrer" className="hover:text-slate-600 transition-colors">Support & Docs</a>
             </div>
             <div>
-              © 2026 zkUPI-Arkiv — All rights reserved. Powered by Arkiv DB-Chain & Golem Network.
+              © 2026 PhantomUPI — All rights reserved. Powered by Arkiv DB-Chain & Golem Network.
             </div>
           </footer>
         </div>

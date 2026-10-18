@@ -1,4 +1,4 @@
-# zkUPI-Arkiv — Public User & Developer Guide
+# PhantomUPI — Public User & Developer Guide
 ### How to Use the Censorship-Resistant, Zero-Knowledge P2P UPI Orderbook
 
 > **Live Application:** [p2p-zkarkiv.vercel.app](http://localhost:3005)  
@@ -7,14 +7,14 @@
 
 ---
 
-## 1. Welcome to zkUPI-Arkiv
+## 1. Welcome to PhantomUPI
 
 In India, over **18 billion UPI transactions** happen every month. However, peer-to-peer crypto traders face catastrophic threats on centralized platforms like Binance P2P:
 1. **Malicious Bank Freezes:** Scammers scrape open VPAs and trigger cybercrime police liens that freeze innocent merchants' bank accounts.
 2. **Bank Statement Leaks:** Centralized dispute desks force users to upload raw bank PDFs and screenshots, exposing lifetime balances, home addresses, and account numbers.
 3. **Platform Censorship:** Centralized platforms can freeze funds or censor orders at will.
 
-**zkUPI-Arkiv solves this using Arkiv DB-Chain:**
+**PhantomUPI solves this using Arkiv DB-Chain:**
 - **Zero Real PII on Arkiv:** All orders enforce synthetic aliases (`*.synth@upi`). No real phone numbers or bank accounts are ever stored on-chain.
 - **Zero-Screenshot zkTLS Proofs:** Instead of uploading a bank statement, your browser generates a client-side cryptographic proof from the bank's TLS 1.3 session. Your remaining bank balance and account number are **strictly redacted**.
 - **Deterministic Replay Protection:** Arkiv's `predictEntityKey` guarantees that no one can reuse the same UPI payment receipt twice.

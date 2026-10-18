@@ -1,4 +1,4 @@
-# zkUPI-Arkiv — Censorship-Resistant, Zero-Knowledge P2P UPI Orderbook on Arkiv
+# PhantomUPI — Censorship-Resistant, Zero-Knowledge P2P UPI Orderbook on Arkiv
 
 [![Tiramisu Testnet](https://img.shields.io/badge/Network-Tiramisu%20Testnet%20(7738577)-059669?style=flat-square)](https://tiramisu.explorer.arkiv.network)
 [![Arkiv SDK](https://img.shields.io/badge/@arkiv--network/sdk-v0.8.1-10b981?style=flat-square)](https://www.npmjs.com/package/@arkiv-network/sdk)
@@ -24,7 +24,7 @@ In India, over **18 billion UPI transactions** occur monthly. However, crypto P2
 
 ---
 
-## 2. How zkUPI-Arkiv Solves It
+## 2. How PhantomUPI Solves It
 
 ### A. Zero Real PII on Arkiv DB-Chain
 Under no circumstances are real mobile numbers, real bank accounts, or genuine UPI VPAs written to Arkiv—neither in plaintext nor hashed. All orders strictly enforce synthetic routing aliases:
